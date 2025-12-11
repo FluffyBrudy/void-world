@@ -2,7 +2,7 @@
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="41">
  <tileset firstgid="1" source=":/automap-tiles.tsx"/>
  <tileset firstgid="6" source="../../tsx/marker.tsx"/>
- <tileset firstgid="70" source="../../tsx/Moonlit-Dungeon.tsx"/>
+ <tileset firstgid="70" source="../../tsx/moonlit-dungeon.tsx"/>
  <tileset firstgid="220" source="../../tsx/forest.tsx"/>
  <layer id="1" name="input_BaseTile" width="40" height="20">
   <data encoding="csv">

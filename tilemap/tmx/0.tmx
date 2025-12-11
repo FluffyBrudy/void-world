@@ -3,7 +3,7 @@
  <editorsettings>
   <export target="../../../../../Desktop/0.json" format="json"/>
  </editorsettings>
- <tileset firstgid="1" source="../tsx/Moonlit-Dungeon.tsx"/>
+ <tileset firstgid="1" source="../tsx/moonlit-dungeon.tsx"/>
  <tileset firstgid="151" source="../tsx/marker.tsx"/>
  <tileset firstgid="215" source="../tsx/forest.tsx"/>
  <layer id="1" name="BaseTile" width="40" height="20">

@@ -8,8 +8,8 @@ AREA_TILE_COLOR = (59, 137, 135, 255)
 
 
 class Tile:
-    def __init__(self, tileset_id: int, pos: Tuple[int, int]) -> None:
-        self.tileset_id = tileset_id
+    def __init__(self, tile_id: int, pos: Tuple[int, int]) -> None:
+        self.tile_id = tile_id
         self.pos = pos
 
 

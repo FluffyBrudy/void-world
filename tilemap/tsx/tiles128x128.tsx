@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tileset version="1.10" tiledversion="1.11.2" name="Tiles128x128" tilewidth="32" tileheight="32" tilecount="225" columns="15">
- <image source="../../assets/Player/tiles/Tiles128x128.png" width="500" height="500"/>
+ <image source="../../assets/Player/tiles/tiles128x128.png" width="500" height="500"/>
 </tileset>

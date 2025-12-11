@@ -20,19 +20,23 @@ class Game:
         for interface in interface_classes:
             interface.game = self
 
-        player_path = ASSETS_PATH / "characters" / "Blue Sprite"
+        player_path = ASSETS_PATH / "characters" / "blue-sprite"
         self.assets = {
-            "player/idle": Animation(load_images(player_path / "Idle"), 0.01),
-            "player/run": Animation(load_images(player_path / "Run"), 0.03),
-            "player/jump": Animation(load_images(player_path / "Jump")),
-            "player/attack": Animation(load_images(player_path / "Attack")),
+            "player/idle": Animation(load_images(player_path / "idle"), 0.01),
+            "player/run": Animation(load_images(player_path / "run"), 0.015),
+            "player/jump": Animation(load_images(player_path / "jump")),
+            "player/attack": Animation(load_images(player_path / "attack")),
             # "player/shoot": Animation(load_images(player_path / "Shoot")),
         }
         self.level = 0
 
         self.player = Player("player", (100, 100), (32, 64))
-        print(Tilemap.game)
+
         self.tilemap = Tilemap()
+        init_load = self.tilemap.load_map(0)
+        if not init_load:
+            raise Exception("tilemap not initialized")
+
         self.movement_x = [0, 0]
 
     def handle_event(self):
@@ -56,7 +60,6 @@ class Game:
         sw, sh = self.screen.size
         target_scroll_x = self.player.rect.centerx - sw // 2
         target_scroll_y = self.player.rect.centery - sh // 2
-        print(self.scroll, self.player.rect.center)
         scroll_x, scroll_y = self.scroll
 
         self.scroll.x = scroll_x + (target_scroll_x - scroll_x) * 0.1

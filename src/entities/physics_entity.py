@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 
 TBasicAction = Literal["idle", "run", "jump", "attack"]
+T4Directions = Literal["up", "down", "left", "right"]
 
 
 class PhysicsEntity:
@@ -26,7 +27,12 @@ class PhysicsEntity:
         self.etype = etype
         self.flipped = False
         self.velocity = pygame.Vector2(0, 0)
-        self.probe_offsets = {"down": (0, 1), "left": (-1, 0), "right": (1, 0)}
+        self.probe_offsets: Dict[T4Directions, Tuple[int, int]] = {
+            "down": (0, 1),
+            "left": (-1, 0),
+            "right": (1, 0),
+            "up": (0, -1),
+        }
         self.collisions = {"up": False, "down": False, "left": False, "right": False}
         self.set_action("idle")
 
