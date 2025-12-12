@@ -1,1 +1,1 @@
-rules/AutomapBase.tmx
+rules/automapbase.tmx

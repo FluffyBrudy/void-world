@@ -74,3 +74,12 @@ def get_numeric_sort_key(filepath: Union[Path, str]) -> Tuple[float, str]:
     number = int(match.group()) if match else float("inf")
 
     return (number, filepath)
+
+
+def get_opaque_min_size(surfaces: Sequence[pygame.Surface]):
+    assert len(surfaces) > 0
+    w, h = surfaces[0].width, surfaces[1].height
+    for surf_index in range(1, len(surfaces)):
+        surf = surfaces[surf_index].get_bounding_rect()
+        w, h = min(w, surf.width), min(h, surf.height)
+    return w, h

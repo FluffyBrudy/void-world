@@ -1,8 +1,8 @@
 import pygame
-from constants import ASSETS_PATH, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.physics_entity import PhysicsEntity, Player
-from lib.tile import AreaTile
 from lib.tilemap import Tilemap
+from pydebug import Debug
 from utils.image_utils import load_images
 from utils.animation import Animation
 
@@ -15,24 +15,23 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-
         interface_classes = (PhysicsEntity, Tilemap)
         for interface in interface_classes:
             interface.game = self
 
         player_path = ASSETS_PATH / "characters" / "blue-sprite"
         self.assets = {
-            "player/idle": Animation(load_images(player_path / "idle"), 0.01),
-            "player/run": Animation(load_images(player_path / "run"), 0.015),
+            "player/idle": Animation(load_images(player_path / "idle"), 0.1),
+            "player/run": Animation(load_images(player_path / "run"), 0.1),
             "player/jump": Animation(load_images(player_path / "jump")),
             "player/attack": Animation(load_images(player_path / "attack")),
             # "player/shoot": Animation(load_images(player_path / "Shoot")),
         }
         self.level = 0
 
-        self.player = Player("player", (100, 100), (32, 64))
+        self.player = Player("player", (100, 0), (5, 0))
 
-        self.tilemap = Tilemap()
+        self.tilemap = Tilemap(tile_scale=3)
         init_load = self.tilemap.load_map(0)
         if not init_load:
             raise Exception("tilemap not initialized")
@@ -66,7 +65,7 @@ class Game:
         self.scroll.y = scroll_y + (target_scroll_y - scroll_y) * 0.05
 
     def update(self):
-        dt = self.clock.tick() / 1000.0
+        dt = self.clock.tick(FPS) / 1000.0
         self.handle_camera()
         movement_x = self.movement_x
         self.player.update(dt, (movement_x[1] - movement_x[0], 0))
@@ -75,6 +74,7 @@ class Game:
         self.screen.fill((50, 50, 100))
         self.player.render()
         self.tilemap.render()
+        Debug.draw_all(self.screen)
         pygame.display.flip()
 
 
