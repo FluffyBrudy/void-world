@@ -17,20 +17,23 @@ class PhysicsEntity:
     # fmt: off
     __slots__ = ("pos", "size", "velocity",
                  "collisions", "flipped", "action", 
-                 "probe_offsets", "animation", "etype")
+                 "probe_offsets", "animation", "etype", "offset")
     # fmt: on
     game: "Game" = cast("Game", None)
 
-    def __init__(self, etype: str, pos: "IntPoint") -> None:
+    def __init__(
+        self, etype: str, pos: "IntPoint", offset: "IntPoint" = (0, 0)
+    ) -> None:
         self.pos = pygame.Vector2(pos)
         self.action: TBasicAction = "idle"
         self.etype = etype
         self.flipped = False
         self.velocity = pygame.Vector2(0, 0)
+        self.offset = offset
         self.probe_offsets: Dict[T4Directions, Tuple[int, int]] = {
-            "down": (0, 1),
-            "left": (-10, 0),
-            "right": (10, 0),
+            "down": (0, self.offset[1] + 1),
+            "left": (-self.offset[0] - 1, 0),
+            "right": (self.offset[0] + 1, 0),
         }
         self.collisions: Dict[T4Directions, bool] = {
             "up": False,
@@ -118,6 +121,9 @@ class PhysicsEntity:
             self.pos.y = old_bottom_center[1] - self.size[1]
 
     def manage_state(self, direction_x: int):
+        if self.action == "attack":
+            if not self.animation.has_animation_end():
+                return
         if not self.collisions["down"]:
             self.set_action("jump")
         elif direction_x:
@@ -164,26 +170,21 @@ class PhysicsEntity:
 
         if self.flipped:
             image = pygame.transform.flip(image, True, False)
-        pgdebug_rect(image, (0, 0, *self.size), 1, 1)
+        pgdebug_rect(surface, self.hitbox, 1, 1)
         surface.blit(image, pos)
 
 
 class Player(PhysicsEntity):
     def __init__(self, etype: str, pos: "IntPoint", offset: "IntPoint") -> None:
-        super().__init__(etype, pos)
+        super().__init__(etype, pos, offset)
         offset_x, offset_y = offset
 
-        def make_hitbox(
-            frame_size: tuple[int, int], use_y_offset: bool = False
-        ) -> tuple[int, int, int, int]:
+        def make_hitbox(frame_size: tuple[int, int]) -> tuple[int, int, int, int]:
             w, h = frame_size
-            y_off = offset_y if use_y_offset else 0
-            return (offset_x, y_off, w - 2 * offset_x, h - 2 * y_off)
+            return (offset_x, offset_y, w - 2 * offset_x, h - 2 * offset_y)
 
         self.state_hitbox: Dict[TBasicAction, tuple[int, int, int, int]] = {
-            "idle": make_hitbox(
-                self.game.assets["player/idle"].get_frame().size, use_y_offset=True
-            ),
+            "idle": make_hitbox(self.game.assets["player/idle"].get_frame().size),
             "run": make_hitbox(self.game.assets["player/run"].get_frame().size),
             "jump": make_hitbox(self.game.assets["player/jump"].get_frame().size),
             "attack": make_hitbox(self.game.assets["player/attack"].get_frame().size),
@@ -199,3 +200,9 @@ class Player(PhysicsEntity):
 
     def jump(self):
         self.velocity.y = -3
+
+    def attack(self):
+        if self.action == "attack":
+            return
+        if not self.collisions["left"] or self.collisions["right"]:
+            self.set_action("attack")
