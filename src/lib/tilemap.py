@@ -23,7 +23,7 @@ class Tilemap:
     game: "Game" = None  # type: ignore
 
     def __init__(self, **kwargs) -> None:
-        self.tile_scale = int(kwargs.get("tile_scale", 1))
+        self.tile_scale = kwargs.get("tile_scale", 1)
         self.grid_tiles: Dict[Tuple[int, int], "Tile"] = {}
         self.grid_nocollision_tiles: Dict[Tuple[int, int], "Tile"] = {}
 
@@ -65,8 +65,8 @@ class Tilemap:
         map_path = MAP_PATH / f"{map_id}.tmx"
         try:
             map_data = load_pygame(str(map_path))
-            self.tilewidth = map_data.tilewidth * self.tile_scale
-            self.tileheight = map_data.tileheight * self.tile_scale
+            self.tilewidth = int(map_data.tilewidth * self.tile_scale)
+            self.tileheight = int(map_data.tileheight * self.tile_scale)
 
             for layer in map_data.layers:
                 if isinstance(layer, TiledTileLayer):

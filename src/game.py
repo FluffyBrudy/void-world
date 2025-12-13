@@ -24,14 +24,14 @@ class Game:
             "player/idle": Animation(load_images(player_path / "idle"), 0.1),
             "player/run": Animation(load_images(player_path / "run"), 0.1),
             "player/jump": Animation(load_images(player_path / "jump"), loop=False),
-            "player/attack": Animation(load_images(player_path / "attack")),
+            "player/attack": Animation(load_images(player_path / "attack"), loop=False),
             # "player/shoot": Animation(load_images(player_path / "Shoot")),
         }
         self.level = 0
 
-        self.player = Player("player", (100, 0), (5, 0))
+        self.player = Player("player", (100, 0), (5, 5))
 
-        self.tilemap = Tilemap(tile_scale=3)
+        self.tilemap = Tilemap(tile_scale=2.5)
         init_load = self.tilemap.load_map(0)
         if not init_load:
             raise Exception("tilemap not initialized")
@@ -49,6 +49,8 @@ class Game:
                     self.movement_x[0] = 1
                 elif event.key == pygame.K_UP:
                     self.player.jump()
+                elif event.key == pygame.K_SPACE:
+                    self.player.attack()
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT:
                     self.movement_x[1] = 0
