@@ -10,8 +10,6 @@ from constants import (
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
 )
-from pydebug import pgdebug_rect
-from utils.image_utils import load_image
 
 
 if TYPE_CHECKING:
@@ -27,7 +25,7 @@ class Tilemap:
     def __init__(self, **kwargs) -> None:
         self.tile_scale = int(kwargs.get("tile_scale", 1))
         self.grid_tiles: Dict[Tuple[int, int], "Tile"] = {}
-        self.grid_nocollision_tiles: Set[Tuple[int, int]] = set()
+        self.grid_nocollision_tiles: Dict[Tuple[int, int], "Tile"] = {}
 
         self.tile_cache: Dict[int, Surface] = {}
         self.object_cache: Dict[int, Surface] = {}
@@ -46,6 +44,7 @@ class Tilemap:
                 and tile_loc not in self.grid_nocollision_tiles
             ):
                 tiles.append(tile_loc)
+
         return tiles
 
     def physics_rect_around(
@@ -87,8 +86,9 @@ class Tilemap:
             tile = Tile(gid, (x * self.tilewidth, y * self.tileheight))
             props = map_data.get_tile_properties_by_gid(gid)
             if props is not None and props.get("no_collision"):
-                self.grid_nocollision_tiles.add((x, y))
-            self.grid_tiles[(x, y)] = tile
+                self.grid_nocollision_tiles[(x, y)] = tile
+            else:
+                self.grid_tiles[(x, y)] = tile
 
     def __load_object_layer(self, layer: "TiledObjectGroup", map_data: "TiledMap"):
         for _ in layer:
@@ -105,9 +105,13 @@ class Tilemap:
         for y in range(start_y, end_y + 2):
             for x in range(start_x, end_x + 2):
                 location = (x, y)
-                if location not in self.grid_tiles:
-                    continue
-                tile = self.grid_tiles[location]
-                pos = tile.pos - scroll
-                surf = self.tile_cache[tile.tile_id]
-                surface.blit(surf, pos)
+                if location in self.grid_tiles:
+                    tile = self.grid_tiles[location]
+                    pos = tile.pos - scroll
+                    surf = self.tile_cache[tile.tile_id]
+                    surface.blit(surf, pos)
+                if location in self.grid_nocollision_tiles:
+                    tile = self.grid_nocollision_tiles[location]
+                    pos = tile.pos - scroll
+                    surf = self.tile_cache[tile.tile_id]
+                    surface.blit(surf, pos)

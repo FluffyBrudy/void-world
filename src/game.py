@@ -23,7 +23,7 @@ class Game:
         self.assets = {
             "player/idle": Animation(load_images(player_path / "idle"), 0.1),
             "player/run": Animation(load_images(player_path / "run"), 0.1),
-            "player/jump": Animation(load_images(player_path / "jump")),
+            "player/jump": Animation(load_images(player_path / "jump"), loop=False),
             "player/attack": Animation(load_images(player_path / "attack")),
             # "player/shoot": Animation(load_images(player_path / "Shoot")),
         }

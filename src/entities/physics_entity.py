@@ -29,8 +29,8 @@ class PhysicsEntity:
         self.velocity = pygame.Vector2(0, 0)
         self.probe_offsets: Dict[T4Directions, Tuple[int, int]] = {
             "down": (0, 1),
-            "left": (-1, 0),
-            "right": (1, 0),
+            "left": (-10, 0),
+            "right": (10, 0),
         }
         self.collisions: Dict[T4Directions, bool] = {
             "up": False,
@@ -61,8 +61,8 @@ class PhysicsEntity:
 
     def handle_vertical_collision(self, movement_y: float):
         tiles_around = self.game.tilemap.physics_rect_around(self.pos)
-
         entity_rect = self.hitbox.copy()
+
         for tile_rect in tiles_around:
             if tile_rect.colliderect(entity_rect):
                 if movement_y > 0:
@@ -101,6 +101,7 @@ class PhysicsEntity:
             for rect in tiles_around:
                 if rect.colliderect(probe_rect):
                     self.collisions[side] = True
+                    break
 
     def set_action(self, action: TBasicAction):
         if action != self.action:
@@ -117,7 +118,9 @@ class PhysicsEntity:
             self.pos.y = old_bottom_center[1] - self.size[1]
 
     def manage_state(self, direction_x: int):
-        if direction_x:
+        if not self.collisions["down"]:
+            self.set_action("jump")
+        elif direction_x:
             self.set_action("run")
         else:
             self.set_action("idle")

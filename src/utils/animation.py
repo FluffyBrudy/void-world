@@ -14,8 +14,10 @@ class Animation:
         self.frames_len = len(frames)
         self.animation_speed = animation_speed
 
-    def copy(self, **kwargs):  # not sure but i might need kwargs
-        return Animation(self.frames, animation_speed=self.animation_speed, **kwargs)
+    def copy(self):
+        return Animation(
+            self.frames, animation_speed=self.animation_speed, loop=self.loop
+        )
 
     def get_frame(self):
         animation_ended = self.has_animation_end()
