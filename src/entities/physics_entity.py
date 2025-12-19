@@ -41,11 +41,9 @@ class PhysicsEntity:
 
         self.rect = image.get_rect(topleft=pos)
 
-        self.direction = pygame.Vector2()
+        self.velocity = pygame.Vector2()
         self.velocity = pygame.Vector2()
         self.prev_direction = pygame.Vector2()
-
-        self.friction = pygame.Vector2(0, 0)
 
         self.contact_sides: TContactSides = {
             "left": False,
@@ -66,10 +64,10 @@ class PhysicsEntity:
 
         for tile_rect in tiles_rect_around:
             if tile_rect.colliderect(self.rect):
-                if self.direction.x < 0:
+                if self.velocity.x < 0:
                     self.rect.left = tile_rect.right
                     break
-                if self.direction.x > 0:
+                if self.velocity.x > 0:
                     self.rect.right = tile_rect.left
                     break
 
@@ -77,13 +75,13 @@ class PhysicsEntity:
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.rect.topleft)
         for tile_rect in tiles_rect_around:
             if tile_rect.colliderect(self.rect):
-                if self.direction.y < 0:
+                if self.velocity.y < 0:
                     self.rect.top = tile_rect.bottom
-                    self.direction.y = 0
+                    self.velocity.y = 0
                     break
-                if self.direction.y > 0:
+                if self.velocity.y > 0:
                     self.rect.bottom = tile_rect.top
-                    self.direction.y = 0
+                    self.velocity.y = 0
                     break
 
     def identify_contact_sides(self):
@@ -102,13 +100,12 @@ class PhysicsEntity:
         )
 
     def handle_movement(self, dt: float):
-        self.direction.y = self.direction.y + GRAVITY * dt
-
-        frame_movement_x = (self.direction.x) * (BASE_SPEED * dt * 2)
+        frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt * 2)
         self.rect.x += round(frame_movement_x)
         self.collision_horizontal()
 
-        self.rect.y += self.direction.y * dt
+        self.velocity.y += GRAVITY * dt
+        self.rect.y += self.velocity.y * dt
         self.collision_vertical()
 
     def update(self, dt: float):
@@ -139,26 +136,26 @@ class Player(PhysicsEntity):
             self.jump()
 
         if input_vector:
-            self.direction.x = input_vector.x
+            self.velocity.x = input_vector.x
         else:
-            self.direction.x = 0
+            self.velocity.x = 0
 
     def can_slide(self):
         return (
-            self.direction.y > 0
+            self.velocity.y > 0
             and (self.contact_sides["left"] or self.contact_sides["right"])
             and not self.contact_sides["down"]
         )
 
     def jump(self):
-        self.direction.y = -JUMP_DISTANCE
+        self.velocity.y = -JUMP_DISTANCE
 
     @override
     def update(self, dt: float):
         self.input()
         if self.can_slide():
-            self.direction.y = min(
-                self.direction.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
+            self.velocity.y = min(
+                self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
             )
 
         super().update(dt)
