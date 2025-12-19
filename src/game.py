@@ -29,33 +29,17 @@ class Game:
         }
         self.level = 0
 
-        self.player = Player("player", (100, 0), (5, 5))
+        self.player = Player((100, -400))
 
         self.tilemap = Tilemap(tile_scale=2.5)
         init_load = self.tilemap.load_map(0)
         if not init_load:
             raise Exception("tilemap not initialized")
 
-        self.movement_x = [0, 0]
-
     def handle_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    self.movement_x[1] = 1
-                elif event.key == pygame.K_LEFT:
-                    self.movement_x[0] = 1
-                elif event.key == pygame.K_UP:
-                    self.player.jump()
-                elif event.key == pygame.K_SPACE:
-                    self.player.attack()
-            elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_RIGHT:
-                    self.movement_x[1] = 0
-                elif event.key == pygame.K_LEFT:
-                    self.movement_x[0] = 0
 
     def handle_camera(self):
         sw, sh = self.screen.size
@@ -68,9 +52,9 @@ class Game:
 
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0
+        self.handle_event()
         self.handle_camera()
-        movement_x = self.movement_x
-        self.player.update(dt, (movement_x[1] - movement_x[0], 0))
+        self.player.update(dt)
 
     def render_all(self):
         self.screen.fill((50, 50, 100))

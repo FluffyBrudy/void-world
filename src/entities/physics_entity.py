@@ -1,6 +1,19 @@
-from typing import TYPE_CHECKING, Dict, Literal, Sequence, Tuple, cast, override
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Literal,
+    Tuple,
+    override,
+)
 import pygame
-from constants import BASE_SPEED
+from pygame.sprite import Group, GroupSingle
+from constants import (
+    BASE_SPEED,
+    GRAVITY,
+    JUMP_DISTANCE,
+    MAX_FALL_SPEED,
+    WALL_FRICTION_COEFFICIENT,
+)
 from pydebug import pgdebug, pgdebug_rect
 from utils.animation import Animation
 
@@ -11,198 +24,137 @@ if TYPE_CHECKING:
 
 TBasicAction = Literal["idle", "run", "jump", "attack"]
 T4Directions = Literal["up", "down", "left", "right"]
+TContactSides = Dict[T4Directions, bool]
 
 
 class PhysicsEntity:
-    # fmt: off
-    __slots__ = ("pos", "size", "velocity",
-                 "collisions", "flipped", "action", 
-                 "probe_offsets", "animation", "etype", "offset")
-    # fmt: on
-    game: "Game" = cast("Game", None)
+    game: "Game" = None  # type: ignore
 
-    def __init__(
-        self, etype: str, pos: "IntPoint", offset: "IntPoint" = (0, 0)
-    ) -> None:
-        self.pos = pygame.Vector2(pos)
+    def __init__(self, etype: str, pos: Tuple[int, int]):
+        super().__init__()
+
         self.action: TBasicAction = "idle"
+        self.animation = self.game.assets[etype + "/" + self.action]
+
         self.etype = etype
-        self.flipped = False
-        self.velocity = pygame.Vector2(0, 0)
-        self.offset = offset
-        self.probe_offsets: Dict[T4Directions, Tuple[int, int]] = {
-            "down": (0, self.offset[1] + 1),
-            "left": (-self.offset[0] - 1, 0),
-            "right": (self.offset[0] + 1, 0),
-        }
-        self.collisions: Dict[T4Directions, bool] = {
-            "up": False,
-            "down": False,
+        self.image = self.animation.get_frame()
+
+        self.rect = self.image.get_rect(topleft=pos)
+
+        self.direction = pygame.Vector2()
+        self.prev_direction = pygame.Vector2()
+
+        self.friction = pygame.Vector2(0, 0)
+
+        self.jumping = False
+
+        self.contact_sides: TContactSides = {
             "left": False,
             "right": False,
-        }
-
-        self.animation = self.game.assets[etype + "/" + self.action].copy()
-        self.size = self.animation.get_frame().size
-
-    @staticmethod
-    def init_collision_state() -> Dict[T4Directions, bool]:
-        return {
             "up": False,
             "down": False,
-            "left": False,
-            "right": False,
         }
 
-    @property
-    def rect(self):
-        return pygame.Rect(self.pos, self.size)
+    def collision_horizontal(self):
+        tiles_rect_around = self.game.tilemap.physics_rect_around(self.rect.topleft)
 
-    @property
-    def hitbox(self):
-        return self.rect
-
-    def handle_vertical_collision(self, movement_y: float):
-        tiles_around = self.game.tilemap.physics_rect_around(self.pos)
-        entity_rect = self.hitbox.copy()
-
-        for tile_rect in tiles_around:
-            if tile_rect.colliderect(entity_rect):
-                if movement_y > 0:
-                    entity_rect.bottom = tile_rect.top
-                    self.collisions["down"] = True
-                    self.pos.y = entity_rect.y
+        for tile_rect in tiles_rect_around:
+            if tile_rect.colliderect(self.rect):
+                if self.direction.x < 0:
+                    self.rect.left = tile_rect.right
                     break
-                elif movement_y < 0:
-                    entity_rect.top = tile_rect.bottom
-                    self.collisions["up"] = True
-                    self.pos.y = entity_rect.y
+                if self.direction.x > 0:
+                    self.rect.right = tile_rect.left
                     break
 
-    def handle_horizontal_collision(self, movement_x: float):
-        tiles_around = self.game.tilemap.physics_rect_around(self.pos)
-        entity_rect = self.hitbox.copy()
-
-        delta = 0
-        for tile_rect in tiles_around:
-            if tile_rect.colliderect(entity_rect):
-                if movement_x > 0:
-                    delta = tile_rect.left - entity_rect.right
-                    self.collisions["right"] = True
-                    self.pos.x += delta
+    def collision_vertical(self):
+        tiles_rect_around = self.game.tilemap.physics_rect_around(self.rect.topleft)
+        for tile_rect in tiles_rect_around:
+            if tile_rect.colliderect(self.rect):
+                if self.direction.y < 0:
+                    self.rect.top = tile_rect.bottom
+                    self.direction.y = 0
                     break
-                elif movement_x < 0:
-                    delta = tile_rect.right - entity_rect.left
-                    self.collisions["left"] = True
-                    self.pos.x += delta
+                if self.direction.y > 0:
+                    self.rect.bottom = tile_rect.top
+                    self.direction.y = 0
                     break
 
-    def probe_collision(self):
-        tiles_around = self.game.tilemap.physics_rect_around(self.pos)
-        for side, offset in self.probe_offsets.items():
-            probe_rect = self.hitbox.move(offset)
-            for rect in tiles_around:
-                if rect.colliderect(probe_rect):
-                    self.collisions[side] = True
-                    break
-
-    def set_action(self, action: TBasicAction):
-        if action != self.action:
-            old_rect = self.hitbox.copy()
-            self.action = action
-            key = self.etype + "/" + action
-            self.animation: "Animation" = self.game.assets[key].copy()
-
-            new_size = self.animation.get_frame().get_size()
-            self.size = new_size
-
-            old_bottom_center = old_rect.midbottom
-            self.pos.x = old_bottom_center[0] - self.size[0] / 2
-            self.pos.y = old_bottom_center[1] - self.size[1]
-
-    def manage_state(self, direction_x: int):
-        if self.action == "attack":
-            if not self.animation.has_animation_end():
-                return
-        if not self.collisions["down"]:
-            self.set_action("jump")
-        elif direction_x:
-            self.set_action("run")
-        else:
-            self.set_action("idle")
-
-    def apply_gravity(self):
-        self.velocity.y = min(self.velocity.y + 0.1, 10)
-
-    def update(self, dt: float, movement: "IntPoint" = (0, 0)):
-        self.collisions = PhysicsEntity.init_collision_state()
-        direction_x = movement[0]
-
-        frame_movement_x = round(
-            (direction_x + self.velocity.x) * (dt * BASE_SPEED * 1.5), 2
+    def identify_contact_sides(self):
+        tiles_rect_around = self.game.tilemap.physics_rect_around(self.rect.topleft)
+        self.contact_sides["left"] = (
+            self.rect.move(-2, 0).collidelist(tiles_rect_around) >= 0
         )
-        frame_movement_y = round(self.velocity.y * (dt * BASE_SPEED), 2)
+        self.contact_sides["right"] = (
+            self.rect.move(2, 0).collidelist(tiles_rect_around) >= 0
+        )
+        self.contact_sides["down"] = (
+            self.rect.move(0, 2).collidelist(tiles_rect_around) >= 0
+        )
+        self.contact_sides["up"] = (
+            self.rect.move(0, -2).collidelist(tiles_rect_around) >= 0
+        )
 
-        if direction_x < 0:
-            self.flipped = True
-        elif direction_x > 0:
-            self.flipped = False
+    def handle_movement(self, dt: float):
+        if self.contact_sides["down"]:
+            self.jumping = False
 
-        self.pos.x += frame_movement_x
-        self.handle_horizontal_collision(frame_movement_x)
+        self.direction.y = self.direction.y + GRAVITY * dt
 
-        self.pos.y += frame_movement_y
-        self.handle_vertical_collision(frame_movement_y)
+        frame_movement_x = (self.direction.x) * (BASE_SPEED * dt * 2)
+        self.rect.x += round(frame_movement_x)
+        self.collision_horizontal()
 
-        self.probe_collision()
-        self.apply_gravity()
-        if self.collisions["down"] or self.collisions["up"]:
-            self.velocity.y = 0
+        self.rect.y += self.direction.y * dt
+        self.collision_vertical()
 
-        pgdebug(self.collisions)
-        self.manage_state(movement[0])
-        self.animation.update()
+    def update(self, dt: float):
+        self.handle_movement(dt)
+        self.identify_contact_sides()
 
     def render(self):
-        surface = self.game.screen
-        pos = self.pos - self.game.scroll
-        image = self.animation.get_frame()
-
-        if self.flipped:
-            image = pygame.transform.flip(image, True, False)
-        pgdebug_rect(surface, self.hitbox, 1, 1)
-        surface.blit(image, pos)
+        main_surface = self.game.screen
+        pos = self.rect.topleft - self.game.scroll
+        main_surface.blit(self.image, pos)
 
 
 class Player(PhysicsEntity):
-    def __init__(self, etype: str, pos: "IntPoint", offset: "IntPoint") -> None:
-        super().__init__(etype, pos, offset)
-        offset_x, offset_y = offset
+    def __init__(self, pos: Tuple[int, int]):
+        super().__init__("player", pos)
 
-        def make_hitbox(frame_size: tuple[int, int]) -> tuple[int, int, int, int]:
-            w, h = frame_size
-            return (offset_x, offset_y, w - 2 * offset_x, h - 2 * offset_y)
+    def input(self):
+        keys = pygame.key.get_pressed()
 
-        self.state_hitbox: Dict[TBasicAction, tuple[int, int, int, int]] = {
-            "idle": make_hitbox(self.game.assets["player/idle"].get_frame().size),
-            "run": make_hitbox(self.game.assets["player/run"].get_frame().size),
-            "jump": make_hitbox(self.game.assets["player/jump"].get_frame().size),
-            "attack": make_hitbox(self.game.assets["player/attack"].get_frame().size),
-        }
+        input_vector = pygame.Vector2(0, 0)
+        if keys[pygame.K_LEFT]:
+            input_vector.x -= 1
+        if keys[pygame.K_RIGHT]:
+            input_vector.x += 1
+        if not self.jumping and keys[pygame.K_SPACE]:
+            self.jumping = True
+            self.jump()
 
-        self.set_action("idle")
+        if input_vector:
+            self.direction.x = input_vector.x
+        else:
+            self.direction.x = 0
 
-    @property
-    def hitbox(self) -> pygame.Rect:
-        ox, oy = self.pos
-        hx, hy, hw, hh = self.state_hitbox[self.action]
-        return pygame.Rect((ox + hx), (oy + hy), hw, hh)
+    def can_slide(self):
+        return (
+            self.direction.y > 0
+            and (self.contact_sides["left"] or self.contact_sides["right"])
+            and not self.contact_sides["down"]
+        )
 
     def jump(self):
-        self.velocity.y = -3
+        self.direction.y = -JUMP_DISTANCE
 
-    def attack(self):
-        if self.action == "attack":
-            return
-        if not self.collisions["left"] or self.collisions["right"]:
-            self.set_action("attack")
+    @override
+    def update(self, dt: float):
+        self.input()
+        if self.can_slide():
+            self.direction.y = min(
+                self.direction.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
+            )
+
+        super().update(dt)
