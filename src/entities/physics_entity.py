@@ -37,16 +37,15 @@ class PhysicsEntity:
         self.animation = self.game.assets[etype + "/" + self.action]
 
         self.etype = etype
-        self.image = self.animation.get_frame()
+        image = self.animation.get_frame()
 
-        self.rect = self.image.get_rect(topleft=pos)
+        self.rect = image.get_rect(topleft=pos)
 
         self.direction = pygame.Vector2()
+        self.velocity = pygame.Vector2()
         self.prev_direction = pygame.Vector2()
 
         self.friction = pygame.Vector2(0, 0)
-
-        self.jumping = False
 
         self.contact_sides: TContactSides = {
             "left": False,
@@ -54,6 +53,13 @@ class PhysicsEntity:
             "up": False,
             "down": False,
         }
+
+        self.animation = self.game.assets[etype + "/" + self.action]
+
+    def set_action(self, new_action: TBasicAction):
+        if new_action != self.action:
+            self.action = new_action
+            self.animation = self.game.assets[self.etype + "/" + self.action]
 
     def collision_horizontal(self):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.rect.topleft)
@@ -96,9 +102,6 @@ class PhysicsEntity:
         )
 
     def handle_movement(self, dt: float):
-        if self.contact_sides["down"]:
-            self.jumping = False
-
         self.direction.y = self.direction.y + GRAVITY * dt
 
         frame_movement_x = (self.direction.x) * (BASE_SPEED * dt * 2)
@@ -111,11 +114,13 @@ class PhysicsEntity:
     def update(self, dt: float):
         self.handle_movement(dt)
         self.identify_contact_sides()
+        self.animation.update()
 
     def render(self):
         main_surface = self.game.screen
         pos = self.rect.topleft - self.game.scroll
-        main_surface.blit(self.image, pos)
+        frame = self.animation.get_frame()
+        main_surface.blit(frame, pos)
 
 
 class Player(PhysicsEntity):
@@ -130,8 +135,7 @@ class Player(PhysicsEntity):
             input_vector.x -= 1
         if keys[pygame.K_RIGHT]:
             input_vector.x += 1
-        if not self.jumping and keys[pygame.K_SPACE]:
-            self.jumping = True
+        if self.is_grounded and keys[pygame.K_SPACE]:
             self.jump()
 
         if input_vector:
@@ -158,3 +162,7 @@ class Player(PhysicsEntity):
             )
 
         super().update(dt)
+
+    @property
+    def is_grounded(self):
+        return self.contact_sides["down"]
