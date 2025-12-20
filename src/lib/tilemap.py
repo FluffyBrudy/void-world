@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Set, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, Sequence, Set, Tuple, cast
 from pygame import Rect, Surface, Vector2
 import pygame
+from pygame.typing import IntPoint
 from pytmx import TiledMap, TiledObjectGroup, TiledTileLayer, TiledTileset, load_pygame
 from lib.tile import Tile
 from constants import (
@@ -48,7 +49,7 @@ class Tilemap:
         return tiles
 
     def physics_rect_around(
-        self, pos: Tuple[float | int, float | int] | Vector2
+        self, pos: Tuple[float | int, float | int] | IntPoint | Sequence[int] | Vector2
     ) -> List[Rect]:
         rects = []
 

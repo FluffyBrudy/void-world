@@ -22,14 +22,14 @@ class Game:
         player_path = ASSETS_PATH / "characters" / "blue-sprite"
         self.assets = {
             "player/idle": Animation(load_images(player_path / "idle"), 0.1),
-            "player/run": Animation(load_images(player_path / "run"), 0.1),
-            "player/jump": Animation(load_images(player_path / "jump"), loop=False),
-            "player/attack": Animation(load_images(player_path / "attack"), loop=False),
+            "player/run": Animation(load_images(player_path / "run"), 0.15),
+            "player/jump": Animation(load_images(player_path / "jump"), 0.2, False),
+            "player/attack": Animation(load_images(player_path / "attack"), 0.2, False),
             # "player/shoot": Animation(load_images(player_path / "Shoot")),
         }
         self.level = 0
 
-        self.player = Player((100, -400))
+        self.player = Player((100, -400), (25, 35), (5, 3))
 
         self.tilemap = Tilemap(tile_scale=2.5)
         init_load = self.tilemap.load_map(0)
@@ -43,8 +43,9 @@ class Game:
 
     def handle_camera(self):
         sw, sh = self.screen.size
-        target_scroll_x = self.player.rect.centerx - sw // 2
-        target_scroll_y = self.player.rect.centery - sh // 2
+        player_rect = self.player.rect()
+        target_scroll_x = player_rect.centerx - sw // 2
+        target_scroll_y = player_rect.centery - sh // 2
         scroll_x, scroll_y = self.scroll
 
         self.scroll.x = scroll_x + (target_scroll_x - scroll_x) * 0.1
