@@ -14,6 +14,7 @@ from constants import (
     WALL_FRICTION_COEFFICIENT,
 )
 from lib.state import IdleState, JumpState, RunState, SlideState
+from pydebug import pgdebug
 
 if TYPE_CHECKING:
     from game import Game
@@ -89,17 +90,16 @@ class PhysicsEntity:
 
     def collision_horizontal(self):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
-        hitbox = self.hitbox()
-        delta = 0
 
         for tile_rect in tiles_rect_around:
+            hitbox = self.hitbox()
             if tile_rect.colliderect(hitbox):
                 if self.velocity.x < 0:
-                    delta = tile_rect.right - hitbox.left
+                    self.pos.x = tile_rect.right - self.offset[0]
+                    self.velocity.x = 0
                 elif self.velocity.x > 0:
-                    delta = tile_rect.left - hitbox.right
-                self.pos[0] += delta
-                break
+                    self.pos.x = tile_rect.left - self.hitbox().width - self.offset[0]
+                    self.velocity.x = 0
 
     def collision_vertical(self):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
@@ -154,10 +154,8 @@ class PhysicsEntity:
         if self.flipped:
             frame = pygame.transform.flip(frame, True, False)
 
-        draw_rect = frame.get_rect(midbottom=self.rect().midbottom)
-        draw_rect.topleft -= self.game.scroll
-
-        self.game.screen.blit(frame, draw_rect.topleft)
+        render_pos = self.pos - self.game.scroll
+        self.game.screen.blit(frame, render_pos)
 
 
 class Player(PhysicsEntity):
@@ -174,10 +172,10 @@ class Player(PhysicsEntity):
 
         input_vector = pygame.Vector2(0, 0)
         if keys[pygame.K_LEFT]:
-            input_vector.x -= 1
+            input_vector.x -= 2
             self.flipped = True
         if keys[pygame.K_RIGHT]:
-            input_vector.x += 1
+            input_vector.x += 2
             self.flipped = False
         if self.current_state.name in ("idle", "run") and keys[pygame.K_SPACE]:
             self.jump()
@@ -195,7 +193,7 @@ class Player(PhysicsEntity):
         )
 
     def jump(self):
-        self.velocity.y = -JUMP_DISTANCE
+        self.velocity.y = -JUMP_DISTANCE * 2
 
     @override
     def update(self, dt: float):
