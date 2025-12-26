@@ -6,7 +6,7 @@ from pydebug import Debug
 from utils.image_utils import load_images
 from utils.animation import Animation
 
-TILEMAP_SCALE = 5
+TILEMAP_SCALE = 3
 
 
 class Game:
@@ -23,9 +23,11 @@ class Game:
 
         player_path = ASSETS_PATH / "characters" / "blue-sprite"
         self.assets = {
-            "player/idle": Animation(load_images(player_path / "idle", 2), 0.1),
-            "player/run": Animation(load_images(player_path / "run", 2), 0.15),
-            "player/jump": Animation(load_images(player_path / "jump", 2), 0.2, False),
+            "player/idle": Animation(load_images(player_path / "idle", 1.5), 0.1),
+            "player/run": Animation(load_images(player_path / "run", 1.6), 0.15),
+            "player/jump": Animation(
+                load_images(player_path / "jump", 1.5), 0.2, False
+            ),
             "player/attack": Animation(
                 load_images(player_path / "attack", 2), 0.2, False
             ),
@@ -35,7 +37,7 @@ class Game:
 
         player_base_size = self.assets["player/idle"].frames[0].size
         print(player_base_size)
-        self.player = Player((100, -400), player_base_size, (10, 10))
+        self.player = Player((100, -400), player_base_size, (7, 7))
 
         self.tilemap = Tilemap(tile_scale=TILEMAP_SCALE)
         init_load = self.tilemap.load_map(0)

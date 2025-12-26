@@ -135,7 +135,7 @@ class PhysicsEntity:
         )
 
     def handle_movement(self, dt: float):
-        frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt * 2)
+        frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
         self.pos[0] += frame_movement_x
         self.collision_horizontal()
 
@@ -177,7 +177,7 @@ class Player(PhysicsEntity):
         if keys[pygame.K_RIGHT]:
             input_vector.x += 2
             self.flipped = False
-        if self.current_state.name in ("idle", "run") and keys[pygame.K_SPACE]:
+        if self.current_state.name in ("idle", "run") and keys[pygame.K_UP]:
             self.jump()
 
         if input_vector:
@@ -193,7 +193,7 @@ class Player(PhysicsEntity):
         )
 
     def jump(self):
-        self.velocity.y = -JUMP_DISTANCE * 2
+        self.velocity.y = int(-JUMP_DISTANCE * 1.5)
 
     @override
     def update(self, dt: float):
