@@ -76,6 +76,9 @@ class PhysicsEntity:
         new_w, new_h = self.size[0] - 2 * ox, self.size[1] - 2 * oy
         return pygame.Rect(new_x, new_y, new_w, new_h)
 
+    def wallslide_render_offset(self) -> Tuple[int, int]:
+        return (0, 0)
+
     def grounded(self):
         return self.contact_sides["down"]
 
@@ -89,6 +92,7 @@ class PhysicsEntity:
         if next_state is not None:
             self.current_state.exit(self)
             self.set_state(next_state)
+            self.current_state.enter(self)
 
     def collision_horizontal(self):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
@@ -151,15 +155,15 @@ class PhysicsEntity:
         self.manage_state()
         self.animation.update()
 
-    def render(self):
+    def render(self, extra_offset=(0, 0)):
         frame = self.animation.get_frame()
+        render_pos = self.pos - self.game.scroll + extra_offset
         if self.flipped:
             frame = pygame.transform.flip(frame, True, False)
-        render_pos = self.pos - self.game.scroll
+
         if frame.width > self.size[0]:
             render_pos.x -= (frame.width - self.size[0]) // 2
-        if frame.height > self.size[1]:
-            render_pos.y -= frame.height - self.size[1]
+
         self.game.screen.blit(frame, render_pos)
 
 
@@ -197,8 +201,10 @@ class Player(PhysicsEntity):
     def can_slide(self):
         return (
             self.velocity.y > 0
-            and (self.contact_sides["left"] and self.flipped)
-            or (self.contact_sides["right"] and not self.flipped)
+            and (
+                (self.contact_sides["left"] and self.flipped)
+                or (self.contact_sides["right"] and not self.flipped)
+            )
             and not self.contact_sides["down"]
         )
 
@@ -208,6 +214,8 @@ class Player(PhysicsEntity):
 
     def attack(self):
         if not self.is_attacking:
+            if self.current_state == "wallslide":
+                self.flipped = not self.flipped
             self.set_state("attack")
 
     @override
@@ -221,8 +229,20 @@ class Player(PhysicsEntity):
         super().update(dt)
 
     @override
+    def wallslide_render_offset(self):
+        if self.current_state.name == "wallslide" and not self.flipped:
+            return (abs(self.animation.get_frame().width - self.size[0]), 0)
+        return (0, 0)
+
+    @override
     def manage_state(self):
         if not self.is_attacking:
             super().manage_state()
         elif self.animation.has_animation_end():
             self.is_attacking = False
+
+    @override
+    def render(self, extra_offset=(0, 0)):
+        if self.current_state.name == "wallslide" and not self.flipped:
+            extra_offset = (abs(self.animation.get_frame().width - self.size[0]), 0)
+        return super().render(extra_offset)

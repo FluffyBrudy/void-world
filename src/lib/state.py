@@ -41,9 +41,6 @@ class JumpState(State):
     def __init__(self):
         super().__init__("jump")
 
-    def enter(self, entity: "PhysicsEntity"):
-        return super().enter(entity)
-
     def can_transition(self, entity: "PhysicsEntity"):
         if entity.grounded():
             return "idle"
@@ -69,7 +66,7 @@ class RunState(State):
 
 class SlideState(State):
     def __init__(self):
-        super().__init__("slide")
+        super().__init__("wallslide")
 
     def can_transition(self, entity: "PhysicsEntity"):
         slideable = getattr(entity, "can_slide")

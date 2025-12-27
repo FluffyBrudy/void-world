@@ -6,7 +6,7 @@ from pydebug import Debug
 from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation
 
-TILEMAP_SCALE = 5
+TILEMAP_SCALE = 3
 
 
 class Game:
@@ -63,7 +63,7 @@ class Game:
                     player_path / "wallslide" / "wallslide.png",
                     (128, 128),
                     scale_ratio_or_size=1.2,
-                    trim_transparent_pixel=(False, None),
+                    trim_transparent_pixel=(True, None),
                     flip=(True, False),
                 ),
                 0.2,
@@ -73,8 +73,8 @@ class Game:
 
         self.level = 0
 
-        player_base_size = (int(32 * 1.4), int(37 * 1.4))
-        self.player = Player((100, -400), player_base_size, (2, 2))
+        player_base_size = self.assets["player/idle"].get_frame().size
+        self.player = Player((100, -400), player_base_size, (5, 5))
 
         self.tilemap = Tilemap(tile_scale=TILEMAP_SCALE)
         init_load = self.tilemap.load_map(0)
@@ -104,8 +104,8 @@ class Game:
 
     def render_all(self):
         self.screen.fill((50, 50, 100))
-        self.tilemap.render()
         self.player.render()
+        self.tilemap.render()
         Debug.draw_all(self.screen)
         pygame.display.flip()
 
