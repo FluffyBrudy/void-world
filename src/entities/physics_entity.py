@@ -14,7 +14,7 @@ from constants import (
     WALL_FRICTION_COEFFICIENT,
 )
 from lib.state import AttackState, IdleState, JumpState, RunState, SlideState, State
-from pydebug import pgdebug
+from pydebug import pgdebug, pgdebug_rect
 
 if TYPE_CHECKING:
     from game import Game
@@ -72,8 +72,9 @@ class PhysicsEntity:
     def hitbox(self):
         x, y = self.pos
         ox, oy = self.offset
-        new_x, new_y = ox + x, oy + y
         new_w, new_h = self.size[0] - 2 * ox, self.size[1] - 2 * oy
+        new_y = oy + y
+        new_x = x + ox
         return pygame.Rect(new_x, new_y, new_w, new_h)
 
     def wallslide_render_offset(self) -> Tuple[int, int]:
@@ -95,17 +96,17 @@ class PhysicsEntity:
             self.current_state.enter(self)
 
     def collision_horizontal(self):
-        tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
+        tiles = self.game.tilemap.physics_rect_around(self.pos)
+        hitbox = self.hitbox()
 
-        for tile_rect in tiles_rect_around:
-            hitbox = self.hitbox()
-            if tile_rect.colliderect(hitbox):
+        for tile in tiles:
+            if tile.colliderect(hitbox):
                 if self.velocity.x < 0:
-                    self.pos.x = tile_rect.right - self.offset[0]
-                    self.velocity.x = 0
+                    self.pos.x += tile.right - hitbox.left
                 elif self.velocity.x > 0:
-                    self.pos.x = tile_rect.left - self.hitbox().width - self.offset[0]
-                    self.velocity.x = 0
+                    self.pos.x -= hitbox.right - tile.left
+                self.velocity.x = 0
+                break
 
     def collision_vertical(self):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
@@ -163,7 +164,8 @@ class PhysicsEntity:
 
         if frame.width > self.size[0]:
             render_pos.x -= (frame.width - self.size[0]) // 2
-
+        if self.current_state.name == "wallslide" and not self.flipped:
+            render_pos.x += abs(self.animation.get_frame().width - self.size[0])
         self.game.screen.blit(frame, render_pos)
 
 
@@ -176,6 +178,11 @@ class Player(PhysicsEntity):
     ):
         super().__init__("player", pos, size, offset)
         self.is_attacking = False
+
+    def attack_hitbox(self):
+        x, y, w, h = self.hitbox()
+        multiplier = -1 if self.flipped else 1
+        return pygame.Rect(x + multiplier * w * 0.3, y, w, h)
 
     def input(self):
         keys = pygame.key.get_pressed()
@@ -214,8 +221,6 @@ class Player(PhysicsEntity):
 
     def attack(self):
         if not self.is_attacking:
-            if self.current_state == "wallslide":
-                self.flipped = not self.flipped
             self.set_state("attack")
 
     @override
@@ -225,14 +230,7 @@ class Player(PhysicsEntity):
             self.velocity.y = min(
                 self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
             )
-
         super().update(dt)
-
-    @override
-    def wallslide_render_offset(self):
-        if self.current_state.name == "wallslide" and not self.flipped:
-            return (abs(self.animation.get_frame().width - self.size[0]), 0)
-        return (0, 0)
 
     @override
     def manage_state(self):
@@ -241,8 +239,8 @@ class Player(PhysicsEntity):
         elif self.animation.has_animation_end():
             self.is_attacking = False
 
-    @override
     def render(self, extra_offset=(0, 0)):
-        if self.current_state.name == "wallslide" and not self.flipped:
-            extra_offset = (abs(self.animation.get_frame().width - self.size[0]), 0)
+        hbox = self.attack_hitbox()
+        pos = hbox.topleft - self.game.scroll
+        pgdebug_rect(self.game.screen, (pos, hbox.size))
         return super().render(extra_offset)

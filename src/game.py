@@ -74,7 +74,7 @@ class Game:
         self.level = 0
 
         player_base_size = self.assets["player/idle"].get_frame().size
-        self.player = Player((100, -400), player_base_size, (5, 5))
+        self.player = Player((100, -400), player_base_size, (0, 0))
 
         self.tilemap = Tilemap(tile_scale=TILEMAP_SCALE)
         init_load = self.tilemap.load_map(0)
