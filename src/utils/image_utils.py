@@ -2,68 +2,127 @@ import sys
 import re
 import pygame
 from pathlib import Path
-from typing import Dict, Sequence, Tuple, Union
+from typing import Dict, Iterable, List, Sequence, Tuple, TypedDict, Union, Unpack
+
+from ttypes.index_type import ImageLoadOptions
 
 
-def load_image(
-    path: Path,
-    scale_ratio_or_size: Union[Tuple[float, float], float] = 1.0,
-    colorkey=None,
-):
+def load_image(path: Path, /, **options: Unpack[ImageLoadOptions]) -> pygame.Surface:
     if not path.exists():
         print(f"[WARNING]: {path} not found")
         sys.exit(1)
 
     image = pygame.image.load(path).convert_alpha()
-    if colorkey:
-        image.set_colorkey(colorkey)
+    return apply_image_options(image, **options)
 
-    if type(scale_ratio_or_size) == float or type(scale_ratio_or_size) == int:
-        scaled_image = pygame.transform.scale_by(image, scale_ratio_or_size)
-        return scaled_image
-    elif len(scale_ratio_or_size) > 1:  # type:ignore
-        scaled_image = pygame.transform.scale(image, scale_ratio_or_size)  # type: ignore
-        return scaled_image
-    else:
-        print(f"[WARNING]: invalid scale-ratio or size")
+
+def load_spritesheet(
+    path: Path, frame_size: Tuple[int, int], /, **options: Unpack[ImageLoadOptions]
+):
+    if not path.exists():
+        print(f"[WARNING]: {path} not found")
         sys.exit(1)
 
-
-def load_images(dir_path: Path, scale: Union[Tuple[float, float], float] = 1):
-    if not dir_path.exists():
-        print(f"[WARNING]: directory {dir_path} not found")
+    spritesheet = pygame.image.load(path).convert_alpha()
+    if (spritesheet.width % frame_size[0]) != 0:
+        print(f"[WARNING]: width isn't symmetric")
         sys.exit(1)
-    sorted_path = sorted(
-        [path for path in dir_path.iterdir() if path.suffix == ".png"],
-        key=get_numeric_sort_key,
-    )
-    return [load_image(img, scale) for img in sorted_path]
+    if (spritesheet.height % frame_size[1]) != 0:
+        print(f"[WARNING]: height isn't symmetric")
+        sys.exit(1)
+
+    row_len = spritesheet.height // frame_size[1]
+    col_len = spritesheet.width // frame_size[0]
+
+    frames: List[pygame.Surface] = []
+    for row in range(row_len):
+        y_pos = row * frame_size[1]
+        for col in range(col_len):
+            topleft = (col * frame_size[0], y_pos)
+            frames.append(
+                apply_image_options(
+                    spritesheet.subsurface((topleft, frame_size)), **options
+                )
+            )
+
+    return frames
 
 
-def load_key_images(
+def load_images(
     dir_path: Path,
-    scale: Union[Tuple[float, float], float] = 1,
-    key_index: Union[Sequence[int], Tuple[int]] = (0,),
     /,
+    **options: Unpack[ImageLoadOptions],
 ):
     if not dir_path.exists():
         print(f"[WARNING]: directory {dir_path} not found")
         sys.exit(1)
-    sorted_path = sorted(
-        [path for path in dir_path.iterdir() if path.suffix == ".png"],
+
+    sorted_paths = sorted(
+        (p for p in dir_path.iterdir() if p.suffix == ".png"),
         key=get_numeric_sort_key,
     )
+
+    return [load_image(path, **options) for path in sorted_paths]
+
+
+def load_key_images(
+    dir_path: Path,
+    key_index: Sequence[int] = (0,),
+    /,
+    **options: Unpack[ImageLoadOptions],
+):
+    if not dir_path.exists():
+        print(f"[WARNING]: directory {dir_path} not found")
+        sys.exit(1)
+
+    sorted_paths = sorted(
+        (p for p in dir_path.iterdir() if p.suffix == ".png"),
+        key=get_numeric_sort_key,
+    )
+
     st_index = key_index[0]
     end_index = max(st_index + 1, len(key_index) - 1)
 
     res: Dict[str, pygame.Surface] = {}
-    for img in sorted_path:
+    for img in sorted_paths:
         key = img.stem[st_index : end_index + 1]
-        if len(key) > 1 and key[0] == "0":
-            key = key[1 : len(key)]
-        value = load_image(img, scale)
-        res[key] = value
+        if len(key) > 1 and key.startswith("0"):
+            key = key[1:]
+
+        res[key] = load_image(img, **options)
+
     return res
+
+
+def apply_image_options(
+    image: pygame.Surface, /, **options: Unpack[ImageLoadOptions]
+) -> pygame.Surface:
+    colorkey = options.get("colorkey")
+    if colorkey is not None:
+        image.set_colorkey(colorkey)
+
+    to_trim, trim_area = options.get("trim_transparent_pixel", (False, None))
+    if to_trim:
+        if trim_area is None:
+            image = image.subsurface(image.get_bounding_rect())
+        else:
+            image = image.subsurface(trim_area)
+
+    flip_x, flip_y = options.get("flip", (False, False))
+    if flip_x or flip_y:
+        image = pygame.transform.flip(image, flip_x, flip_y)
+
+    scale = options.get("scale_ratio_or_size")
+    if scale is not None:
+        if isinstance(scale, (int, float)):
+            image = pygame.transform.scale_by(image, scale)
+        elif isinstance(scale, tuple) and len(scale) == 2:
+            image = pygame.transform.scale(image, scale)
+        else:
+            print("[WARNING]: invalid scale_ratio_or_size")
+            sys.exit(1)
+
+    return image
 
 
 def get_numeric_sort_key(filepath: Union[Path, str]) -> Tuple[float, str]:
@@ -74,12 +133,3 @@ def get_numeric_sort_key(filepath: Union[Path, str]) -> Tuple[float, str]:
     number = int(match.group()) if match else float("inf")
 
     return (number, filepath)
-
-
-def get_opaque_min_size(surfaces: Sequence[pygame.Surface]):
-    assert len(surfaces) > 0
-    w, h = surfaces[0].width, surfaces[1].height
-    for surf_index in range(1, len(surfaces)):
-        surf = surfaces[surf_index].get_bounding_rect()
-        w, h = min(w, surf.width), min(h, surf.height)
-    return w, h

@@ -3,10 +3,10 @@ from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.physics_entity import PhysicsEntity, Player
 from lib.tilemap import Tilemap
 from pydebug import Debug
-from utils.image_utils import load_images
+from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation
 
-TILEMAP_SCALE = 3
+TILEMAP_SCALE = 5
 
 
 class Game:
@@ -21,23 +21,60 @@ class Game:
         for interface in interface_classes:
             interface.game = self
 
-        player_path = ASSETS_PATH / "characters" / "blue-sprite"
+        player_path = ASSETS_PATH / "characters" / "player"
+
         self.assets = {
-            "player/idle": Animation(load_images(player_path / "idle", 1.5), 0.1),
-            "player/run": Animation(load_images(player_path / "run", 1.6), 0.15),
+            "player/idle": Animation(
+                load_images(
+                    player_path / "idle",
+                    scale_ratio_or_size=1.2,
+                    trim_transparent_pixel=(True, (41, 43, 34, 38)),
+                ),
+                0.1,
+            ),
+            "player/run": Animation(
+                load_images(
+                    player_path / "run",
+                    scale_ratio_or_size=1.2,
+                    trim_transparent_pixel=(True, (44, 43, 43, 40)),
+                ),
+                0.15,
+            ),
             "player/jump": Animation(
-                load_images(player_path / "jump", 1.5), 0.2, False
+                load_images(
+                    player_path / "jump",
+                    scale_ratio_or_size=1.2,
+                    trim_transparent_pixel=(True, (44, 36, 41, 55)),
+                ),
+                0.2,
+                False,
             ),
             "player/attack": Animation(
-                load_images(player_path / "attack", 2), 0.2, False
+                load_images(
+                    player_path / "attack",
+                    scale_ratio_or_size=1.2,
+                    trim_transparent_pixel=(True, ((52, 42, 63, 47))),
+                ),
+                0.2,
+                False,
             ),
-            # "player/shoot": Animation(load_images(player_path / "Shoot")),
+            "player/wallslide": Animation(
+                load_spritesheet(
+                    player_path / "wallslide" / "wallslide.png",
+                    (128, 128),
+                    scale_ratio_or_size=1.2,
+                    trim_transparent_pixel=(False, None),
+                    flip=(True, False),
+                ),
+                0.2,
+                False,
+            ),
         }
+
         self.level = 0
 
-        player_base_size = self.assets["player/idle"].frames[0].size
-        print(player_base_size)
-        self.player = Player((100, -400), player_base_size, (7, 7))
+        player_base_size = (int(32 * 1.4), int(37 * 1.4))
+        self.player = Player((100, -400), player_base_size, (2, 2))
 
         self.tilemap = Tilemap(tile_scale=TILEMAP_SCALE)
         init_load = self.tilemap.load_map(0)
@@ -67,8 +104,8 @@ class Game:
 
     def render_all(self):
         self.screen.fill((50, 50, 100))
-        self.player.render()
         self.tilemap.render()
+        self.player.render()
         Debug.draw_all(self.screen)
         pygame.display.flip()
 

@@ -13,7 +13,7 @@ from constants import (
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,
 )
-from lib.state import IdleState, JumpState, RunState, SlideState
+from lib.state import AttackState, IdleState, JumpState, RunState, SlideState, State
 from pydebug import pgdebug
 
 if TYPE_CHECKING:
@@ -41,8 +41,9 @@ class PhysicsEntity:
             "run": RunState(),
             "jump": JumpState(),
             "wallslide": SlideState(),
+            "attack": AttackState(),
         }
-        self.current_state = self.states["idle"]
+        self.current_state: State = self.states["idle"]
 
         self.animation = self.game.assets[etype + "/" + "idle"]
 
@@ -75,7 +76,7 @@ class PhysicsEntity:
         new_w, new_h = self.size[0] - 2 * ox, self.size[1] - 2 * oy
         return pygame.Rect(new_x, new_y, new_w, new_h)
 
-    def is_grounded(self):
+    def grounded(self):
         return self.contact_sides["down"]
 
     def set_state(self, new_state: str):
@@ -86,6 +87,7 @@ class PhysicsEntity:
     def manage_state(self):
         next_state = self.current_state.can_transition(self)
         if next_state is not None:
+            self.current_state.exit(self)
             self.set_state(next_state)
 
     def collision_horizontal(self):
@@ -153,8 +155,11 @@ class PhysicsEntity:
         frame = self.animation.get_frame()
         if self.flipped:
             frame = pygame.transform.flip(frame, True, False)
-
         render_pos = self.pos - self.game.scroll
+        if frame.width > self.size[0]:
+            render_pos.x -= (frame.width - self.size[0]) // 2
+        if frame.height > self.size[1]:
+            render_pos.y -= frame.height - self.size[1]
         self.game.screen.blit(frame, render_pos)
 
 
@@ -166,6 +171,7 @@ class Player(PhysicsEntity):
         offset: Tuple[int, int] = (0, 0),
     ):
         super().__init__("player", pos, size, offset)
+        self.is_attacking = False
 
     def input(self):
         keys = pygame.key.get_pressed()
@@ -174,11 +180,14 @@ class Player(PhysicsEntity):
         if keys[pygame.K_LEFT]:
             input_vector.x -= 2
             self.flipped = True
-        if keys[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT]:
             input_vector.x += 2
             self.flipped = False
-        if self.current_state.name in ("idle", "run") and keys[pygame.K_UP]:
-            self.jump()
+        if self.current_state.name in ("idle", "run"):
+            if keys[pygame.K_UP]:
+                self.jump()
+        if keys[pygame.K_SPACE]:
+            self.set_state("attack")
 
         if input_vector:
             self.velocity.x = input_vector.x
@@ -188,12 +197,18 @@ class Player(PhysicsEntity):
     def can_slide(self):
         return (
             self.velocity.y > 0
-            and (self.contact_sides["left"] or self.contact_sides["right"])
+            and (self.contact_sides["left"] and self.flipped)
+            or (self.contact_sides["right"] and not self.flipped)
             and not self.contact_sides["down"]
         )
 
     def jump(self):
         self.velocity.y = int(-JUMP_DISTANCE * 1.5)
+        self.is_jumping = True
+
+    def attack(self):
+        if not self.is_attacking:
+            self.set_state("attack")
 
     @override
     def update(self, dt: float):
@@ -205,5 +220,9 @@ class Player(PhysicsEntity):
 
         super().update(dt)
 
+    @override
     def manage_state(self):
-        super().manage_state()
+        if not self.is_attacking:
+            super().manage_state()
+        elif self.animation.has_animation_end():
+            self.is_attacking = False
