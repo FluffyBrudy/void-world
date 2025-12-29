@@ -32,6 +32,17 @@ class Game:
                 ),
                 0.1,
             ),
+            "player/idleturn": Animation(
+                load_spritesheet(
+                    player_path / "idle_turn" / "idle_turn.png",
+                    (128, 128),
+                    scale_ratio_or_size=1.2,
+                    trim_transparent_pixel=(True, None),
+                    flip=(True, False),
+                ),
+                animation_speed=0.2,
+                loop=False,
+            ),
             "player/run": Animation(
                 load_images(
                     player_path / "run",
@@ -64,7 +75,6 @@ class Game:
                     (128, 128),
                     scale_ratio_or_size=1.2,
                     trim_transparent_pixel=(True, None),
-                    flip=(True, False),
                 ),
                 0.2,
                 False,
@@ -74,7 +84,7 @@ class Game:
         self.level = 0
 
         player_base_size = self.assets["player/idle"].get_frame().size
-        self.player = Player((100, -400), player_base_size, (0, 0))
+        self.player = Player((100, -400), player_base_size, (1, 0))
 
         self.tilemap = Tilemap(tile_scale=TILEMAP_SCALE)
         init_load = self.tilemap.load_map(0)

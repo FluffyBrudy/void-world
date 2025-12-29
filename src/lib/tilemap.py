@@ -41,8 +41,9 @@ class Tilemap:
             new_x, new_y = gx + nx, gy + ny
             tile_loc = (new_x, new_y)
             if (
-                tile_loc in self.grid_tiles
-                and tile_loc not in self.grid_nocollision_tiles
+                tile_loc
+                in self.grid_tiles
+                # and tile_loc not in self.grid_nocollision_tiles
             ):
                 tiles.append(tile_loc)
 

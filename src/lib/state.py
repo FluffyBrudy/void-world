@@ -37,6 +37,20 @@ class IdleState(State):
         return None
 
 
+class IdleTurnState(State):
+    def __init__(self):
+        super().__init__("idleturn")
+
+    def can_transition(self, entity: "PhysicsEntity"):
+        if not entity.grounded():
+            return "jump"
+        if entity.velocity.x != 0:
+            return "run"
+        if entity.animation.has_animation_end():
+            return "idle"
+        return None
+
+
 class JumpState(State):
     def __init__(self):
         super().__init__("jump")
@@ -81,6 +95,9 @@ class SlideState(State):
 class AttackState(State):
     def __init__(self):
         super().__init__("attack")
+
+    def enter(self, entity: "PhysicsEntity"):
+        entity.velocity.x = 0
 
     def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
         if entity.animation.has_animation_end():

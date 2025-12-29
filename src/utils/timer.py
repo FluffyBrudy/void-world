@@ -1,16 +1,22 @@
+from typing import Union
+
 import pygame
 
 
 class Timer:
-    __slots__ = ("interval", "start_time")
+    """
+    Args:
+            interval (float): milisecond time interval
+    """
 
-    def __init__(self, interval: float):
+    __slots__ = ("interval", "start_timer")
+
+    def __init__(self, interval: Union[float, int]) -> None:
+        self.start_timer = pygame.time.get_ticks()
         self.interval = interval
-        self.start_time = pygame.time.get_ticks()
 
-    @property
-    def interval_reached(self):
-        return (pygame.time.get_ticks() - self.start_time) >= self.interval_reached
+    def reset_to_now(self):
+        self.start_timer = pygame.time.get_ticks()
 
-    def reset(self):
-        self.start_time = pygame.time.get_ticks()
+    def has_reach_interval(self):
+        return (pygame.time.get_ticks() - self.start_timer) >= self.interval
