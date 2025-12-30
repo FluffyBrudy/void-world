@@ -1,8 +1,9 @@
 import pygame
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.physics_entity import PhysicsEntity, Player
+from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
-from pydebug import Debug
+from pydebug import Debug, pgdebug
 from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation
 
@@ -17,7 +18,7 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-        interface_classes = (PhysicsEntity, Tilemap)
+        interface_classes = (PhysicsEntity, Tilemap, ParallaxBg)
         for interface in interface_classes:
             interface.game = self
 
@@ -91,12 +92,14 @@ class Game:
         if not init_load:
             raise Exception("tilemap not initialized")
 
+        self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
+
     def handle_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
 
-    def handle_camera(self):
+    def player_center_camera(self):
         sw, sh = self.screen.size
         player_rect = self.player.rect()
         target_scroll_x = player_rect.centerx - sw // 2
@@ -106,14 +109,31 @@ class Game:
         self.scroll.x = scroll_x + (target_scroll_x - scroll_x) * 0.1
         self.scroll.y = scroll_y + (target_scroll_y - scroll_y) * 0.05
 
+    def deadzone_camera(self, left_threshold=520, right_threshold=1400):
+        sh = self.screen.size[1]
+        player_rect = self.player.rect()
+        scroll_x, scroll_y = self.scroll
+        target_scroll_x = scroll_x
+        target_scroll_y = player_rect.centery - sh // 2
+
+        if player_rect.centerx < scroll_x + left_threshold:
+            target_scroll_x = player_rect.centerx - left_threshold
+        elif player_rect.centerx > scroll_x + right_threshold:
+            target_scroll_x = player_rect.centerx - right_threshold
+
+        self.scroll.x += (target_scroll_x - scroll_x) * 0.1
+        self.scroll.y += (target_scroll_y - scroll_y) * 0.05
+        pgdebug(self.scroll)
+
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0
         self.handle_event()
-        self.handle_camera()
+        self.deadzone_camera()
         self.player.update(dt)
 
     def render_all(self):
         self.screen.fill((50, 50, 100))
+        self.parallaxbg.render()
         self.player.render()
         self.tilemap.render()
         Debug.draw_all(self.screen)
