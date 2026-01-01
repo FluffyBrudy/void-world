@@ -5,9 +5,10 @@ from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug, pgdebug
 from utils.image_utils import load_images, load_spritesheet
-from utils.animation import Animation
+from utils.animation import Animation, PostAnimatableAnimation
 
-TILEMAP_SCALE = 3
+TILEMAP_SCALE = 8
+PLAYER_SCALE = TILEMAP_SCALE / 2.5
 
 
 class Game:
@@ -28,16 +29,16 @@ class Game:
             "player/idle": Animation(
                 load_images(
                     player_path / "idle",
-                    scale_ratio_or_size=1.2,
+                    scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, (41, 43, 34, 38)),
                 ),
-                0.1,
+                0.2,
             ),
             "player/idleturn": Animation(
                 load_spritesheet(
                     player_path / "idle_turn" / "idle_turn.png",
                     (128, 128),
-                    scale_ratio_or_size=1.2,
+                    scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
                     flip=(True, False),
                 ),
@@ -47,24 +48,41 @@ class Game:
             "player/run": Animation(
                 load_images(
                     player_path / "run",
-                    scale_ratio_or_size=1.2,
+                    scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, (44, 43, 43, 40)),
                 ),
-                0.15,
+                0.2,
             ),
             "player/jump": Animation(
                 load_images(
                     player_path / "jump",
-                    scale_ratio_or_size=1.2,
+                    scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, (44, 36, 41, 55)),
                 ),
                 0.2,
                 False,
             ),
+            "player/fall": PostAnimatableAnimation(
+                load_spritesheet(
+                    player_path / "fall" / "fall_loop.png",
+                    (128, 128),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                ),
+                load_spritesheet(
+                    player_path / "fall" / "fall.png",
+                    (128, 128),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                ),
+                0.2,
+                0.1,
+                True,
+            ),
             "player/attack": Animation(
                 load_images(
                     player_path / "attack",
-                    scale_ratio_or_size=1.2,
+                    scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, ((52, 42, 63, 47))),
                 ),
                 0.2,
@@ -74,7 +92,7 @@ class Game:
                 load_spritesheet(
                     player_path / "wallslide" / "wallslide.png",
                     (128, 128),
-                    scale_ratio_or_size=1.2,
+                    scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
                 ),
                 0.2,

@@ -58,6 +58,22 @@ class JumpState(State):
     def can_transition(self, entity: "PhysicsEntity"):
         if entity.grounded():
             return "idle"
+        elif entity.velocity.y > 0:
+            return "fall"
+        slideable = getattr(entity, "can_slide")
+        if slideable and slideable():
+            return "wallslide"
+
+        return None
+
+
+class FallState(State):
+    def __init__(self):
+        super().__init__("fall")
+
+    def can_transition(self, entity: "PhysicsEntity"):
+        if entity.grounded():
+            return "idle"
         slideable = getattr(entity, "can_slide")
         if slideable and slideable():
             return "wallslide"

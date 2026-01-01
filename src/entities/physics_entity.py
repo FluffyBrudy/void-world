@@ -15,6 +15,7 @@ from constants import (
 )
 from lib.state import (
     AttackState,
+    FallState,
     IdleState,
     IdleTurnState,
     JumpState,
@@ -49,7 +50,6 @@ class PhysicsEntity:
             "idle": IdleState(),
             "run": RunState(),
             "jump": JumpState(),
-            "wallslide": SlideState(),
             "attack": AttackState(),
         }
         self.current_state: State = self.states["idle"]
@@ -131,7 +131,7 @@ class PhysicsEntity:
                 break
 
     def identify_contact_sides(self):
-        tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
+        tiles_rect_around = se  lf.game.tilemap.physics_rect_around(self.pos)
 
         hitbox = self.hitbox()
         self.contact_sides["left"] = (
@@ -161,6 +161,7 @@ class PhysicsEntity:
         self.identify_contact_sides()
         self.manage_state()
         self.animation.update()
+        pgdebug("fall" if self.velocity.y > 0 and not self.grounded() else "")
 
     def render(self):
         frame = self.animation.get_frame()
@@ -187,7 +188,12 @@ class Player(PhysicsEntity):
         self.flip_timer = Timer(200)
         self.attack_timer = Timer(300)
 
-        self.states = {**self.states, "idleturn": IdleTurnState()}
+        self.states = {
+            **self.states,
+            "idleturn": IdleTurnState(),
+            "fall": FallState(),
+            "wallslide": SlideState(),
+        }
 
     def attack_hitbox(self):
         x, y, w, h = self.hitbox()
