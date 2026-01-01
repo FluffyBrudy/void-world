@@ -131,7 +131,7 @@ class PhysicsEntity:
                 break
 
     def identify_contact_sides(self):
-        tiles_rect_around = se  lf.game.tilemap.physics_rect_around(self.pos)
+        tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
 
         hitbox = self.hitbox()
         self.contact_sides["left"] = (
