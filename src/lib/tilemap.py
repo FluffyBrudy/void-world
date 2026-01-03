@@ -63,6 +63,11 @@ class Tilemap:
             rects.append(rect)
         return rects
 
+    def is_solid_tile(self, pos: IntPoint):
+        x = int(pos[0] // self.tilewidth)
+        y = int(pos[1] // self.tileheight)
+        return (x, y) in self.grid_tiles
+
     def load_map(self, map_id: int):
         map_path = MAP_PATH / f"{map_id}.tmx"
         try:

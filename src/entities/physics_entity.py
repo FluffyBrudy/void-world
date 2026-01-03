@@ -13,7 +13,7 @@ from constants import (
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,
 )
-from .states.fsm import (
+from .states.player_fsm import (
     AttackState,
     FallState,
     IdleState,

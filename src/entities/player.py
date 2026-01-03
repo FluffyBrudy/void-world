@@ -13,7 +13,7 @@ from constants import (
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,
 )
-from entities.states.fsm import (
+from entities.states.player_fsm import (
     AttackState,
     FallState,
     IdleState,
@@ -88,6 +88,7 @@ class Player(PhysicsEntity):
             self.velocity.x = 0
 
     def can_slide(self):
+        player_bottom = self.hitbox().bottomright
         return (
             self.velocity.y > 0
             and (
@@ -95,6 +96,7 @@ class Player(PhysicsEntity):
                 or (self.contact_sides["right"] and not self.flipped)
             )
             and not self.contact_sides["down"]
+            and self.game.tilemap.is_solid_tile(player_bottom)
         )
 
     def jump(self):
