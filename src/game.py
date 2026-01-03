@@ -1,6 +1,7 @@
 import pygame
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
-from entities.physics_entity import PhysicsEntity, Player
+from entities.physics_entity import PhysicsEntity
+from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug, pgdebug
@@ -67,13 +68,13 @@ class Game:
                     player_path / "fall" / "fall_loop.png",
                     (128, 128),
                     scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
+                    trim_transparent_pixel=(True, (44, 36, 41, 55)),
                 ),
                 load_spritesheet(
                     player_path / "fall" / "fall.png",
                     (128, 128),
                     scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
+                    trim_transparent_pixel=(True, (44, 36, 41, 55)),
                 ),
                 0.2,
                 0.1,
@@ -103,7 +104,7 @@ class Game:
         self.level = 0
 
         player_base_size = self.assets["player/idle"].get_frame().size
-        self.player = Player((100, -400), player_base_size, (1, 0))
+        self.player = Player((100, -400), player_base_size, (0, 0))
 
         self.tilemap = Tilemap(tile_scale=TILEMAP_SCALE)
         init_load = self.tilemap.load_map(0)

@@ -13,7 +13,7 @@ from constants import (
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,
 )
-from lib.state import (
+from .states.fsm import (
     AttackState,
     FallState,
     IdleState,
@@ -42,17 +42,16 @@ class PhysicsEntity:
         etype: str,
         pos: Tuple[int, int],
         size: Tuple[int, int],
+        states: Dict[str, State],
         offset: Tuple[int, int] = (0, 0),
     ):
         super().__init__()
 
-        self.states: Dict[str, State] = {
-            "idle": IdleState(),
-            "run": RunState(),
-            "jump": JumpState(),
-            "attack": AttackState(),
-        }
-        self.current_state: State = self.states["idle"]
+        self.states = states
+
+        assert len(states.keys()) > 0
+        default_state = "idle" if "idle" in self.states else list(self.states.keys())[0]
+        self.current_state: State = self.states[default_state]
 
         self.animation = self.game.assets[etype + "/" + "idle"]
 
@@ -107,12 +106,17 @@ class PhysicsEntity:
 
         for tile in tiles:
             if tile.colliderect(hitbox):
-                if self.velocity.x < 0:
-                    self.pos.x += tile.right - hitbox.left
-                elif self.velocity.x > 0:
-                    self.pos.x -= hitbox.right - tile.left
-                self.velocity.x = 0
+                self.__resolve_horizontal_collision(hitbox, tile)
                 break
+
+    def __resolve_horizontal_collision(
+        self, hitbox: pygame.Rect, tile_rect: pygame.Rect, /
+    ):
+        if self.velocity.x < 0:
+            self.pos.x += tile_rect.right - hitbox.left
+        elif self.velocity.x > 0:
+            self.pos.x -= hitbox.right - tile_rect.left
+        self.velocity.x = 0
 
     def collision_vertical(self):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
@@ -161,7 +165,6 @@ class PhysicsEntity:
         self.identify_contact_sides()
         self.manage_state()
         self.animation.update()
-        pgdebug("fall" if self.velocity.y > 0 and not self.grounded() else "")
 
     def render(self):
         frame = self.animation.get_frame()
@@ -172,107 +175,8 @@ class PhysicsEntity:
 
         render_pos.x += (self.size[0] - frame.get_width()) / 2
         render_pos.y += (self.size[1] - frame.get_height()) / 2
-
+        hitbox = self.hitbox()
+        pos = hitbox.topleft - self.game.scroll
+        size = hitbox.size
         self.game.screen.blit(frame, render_pos)
-
-
-class Player(PhysicsEntity):
-    def __init__(
-        self,
-        pos: Tuple[int, int],
-        size: Tuple[int, int],
-        offset: Tuple[int, int] = (0, 0),
-    ):
-        super().__init__("player", pos, size, offset)
-        self.is_attacking = False
-        self.flip_timer = Timer(200)
-        self.attack_timer = Timer(300)
-
-        self.states = {
-            **self.states,
-            "idleturn": IdleTurnState(),
-            "fall": FallState(),
-            "wallslide": SlideState(),
-        }
-
-    def attack_hitbox(self):
-        x, y, w, h = self.hitbox()
-        multiplier = -1 if self.flipped else 1
-        return pygame.Rect(x + multiplier * w * 0.3, y, w, h)
-
-    def input(self):
-        keys = pygame.key.get_pressed()
-
-        input_vector = pygame.Vector2(0, 0)
-        if keys[pygame.K_LEFT]:
-            if not self.flipped:
-                self.flipped = True
-                self.set_state("idleturn")
-
-            if self.flip_timer.has_reach_interval():
-                input_vector.x -= 2
-
-        elif keys[pygame.K_RIGHT]:
-            if self.flipped:
-                self.flipped = False
-                self.set_state("idleturn")
-
-            if self.flip_timer.has_reach_interval():
-                input_vector.x += 2
-        else:
-            self.flip_timer.reset_to_now()
-
-        if self.current_state.name in ("idle", "run"):
-            if keys[pygame.K_UP]:
-                self.jump()
-        if keys[pygame.K_SPACE]:
-            self.attack()
-
-        if input_vector:
-            self.velocity.x = input_vector.x
-        else:
-            self.velocity.x = 0
-
-    def can_slide(self):
-        return (
-            self.velocity.y > 0
-            and (
-                (self.contact_sides["left"] and self.flipped)
-                or (self.contact_sides["right"] and not self.flipped)
-            )
-            and not self.contact_sides["down"]
-        )
-
-    def jump(self):
-        self.velocity.y = int(-JUMP_DISTANCE * 2)
-        self.is_jumping = True
-
-    def attack(self):
-        if not self.is_attacking and self.attack_timer.has_reach_interval():
-            self.set_state("attack")
-            self.is_attacking = True
-
-    @override
-    def update(self, dt: float):
-        self.input()
-        if self.is_attacking:
-            self.velocity.x = 0
-        if self.can_slide():
-            self.velocity.y = min(
-                self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
-            )
-        super().update(dt)
-
-    @override
-    def manage_state(self):
-        if self.is_attacking and self.animation.has_animation_end():
-            self.is_attacking = False
-            self.attack_timer.reset_to_now()
-        super().manage_state()
-
-    def render(self):
-        # hbox = self.attack_hitbox()
-        # pos = hbox.topleft - self.game.scroll
-        # pgdebug_rect(self.game.screen, (pos, hbox.size))
-        pgdebug(self.is_attacking)
-        return super().render()
+        pgdebug_rect(self.game.screen, (pos, size))
