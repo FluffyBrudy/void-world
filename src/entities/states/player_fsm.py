@@ -14,7 +14,7 @@ class State:
     def exit(self, entity: "PhysicsEntity"):
         pass
 
-    def update(self, entity: "PhysicsEntity", dt: float):
+    def update(self, entity: "PhysicsEntity", **kwargs):
         """for future" maybe if i feel i need"""
         pass
 

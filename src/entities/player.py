@@ -73,6 +73,7 @@ class Player(PhysicsEntity):
 
             if self.flip_timer.has_reach_interval():
                 input_vector.x += 2
+
         else:
             self.flip_timer.reset_to_now()
 
@@ -88,7 +89,10 @@ class Player(PhysicsEntity):
             self.velocity.x = 0
 
     def can_slide(self):
-        player_bottom = self.hitbox().bottomright
+        hitbox = self.hitbox()
+        pos_x = hitbox.right
+        if self.flipped:
+            pos_x = hitbox.left - self.game.tilemap.tilewidth
         return (
             self.velocity.y > 0
             and (
@@ -96,7 +100,7 @@ class Player(PhysicsEntity):
                 or (self.contact_sides["right"] and not self.flipped)
             )
             and not self.contact_sides["down"]
-            and self.game.tilemap.is_solid_tile(player_bottom)
+            and self.game.tilemap.is_solid_tile((pos_x, hitbox.bottom))
         )
 
     def jump(self):
@@ -130,5 +134,5 @@ class Player(PhysicsEntity):
         # hbox = self.attack_hitbox()
         # pos = hbox.topleft - self.game.scroll
         # pgdebug_rect(self.game.screen, (pos, hbox.size))
-        pgdebug(self.is_attacking)
+        pgdebug(f"{self.flipped}")
         return super().render()

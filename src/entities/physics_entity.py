@@ -99,6 +99,7 @@ class PhysicsEntity:
             self.current_state.exit(self)
             self.set_state(next_state)
             self.current_state.enter(self)
+        self.current_state.update(self)
 
     def collision_horizontal(self):
         tiles = self.game.tilemap.physics_rect_around(self.pos)
