@@ -1,3 +1,4 @@
+from typing import Dict
 import pygame
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.enemy_entity import Bat
@@ -27,7 +28,7 @@ class Game:
 
         player_path = ASSETS_PATH / "characters" / "player"
 
-        self.assets = {
+        self.assets: Dict[str, Animation] = {
             "player/idle": Animation(
                 load_images(
                     player_path / "idle",
@@ -109,6 +110,15 @@ class Game:
                 0.2,
                 True,
             ),
+            "bat/attack": Animation(
+                load_images(
+                    ASSETS_PATH / "enemies" / "bat" / "attack",
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                ),
+                0.2,
+                True,
+            ),
         }
 
         self.level = 0
@@ -123,7 +133,7 @@ class Game:
 
         self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
 
-        Bat.add(Bat((0, 0), (32, 32)))
+        Bat.add(Bat((0, 0), self.assets["bat/fly"].get_frame().size))
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -166,8 +176,8 @@ class Game:
     def render_all(self):
         self.screen.fill((50, 50, 100))
         self.parallaxbg.render()
-        Bat.render_all(self.dt)
-        self.player.render()
+        self.player.render(self.screen)
+        PhysicsEntity.render_all(self.dt)
         self.tilemap.render()
         Debug.draw_all(self.screen)
         pygame.display.flip()

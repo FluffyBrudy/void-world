@@ -1,7 +1,9 @@
+from abc import ABC, abstractmethod
 from typing import (
     TYPE_CHECKING,
     Dict,
     Literal,
+    Set,
     Tuple,
 )
 import pygame
@@ -17,8 +19,9 @@ T4Directions = Literal["up", "down", "left", "right"]
 TContactSides = Dict[T4Directions, bool]
 
 
-class PhysicsEntity:
+class PhysicsEntity(ABC):
     game: "Game" = None  # type: ignore
+    __instances: Set["PhysicsEntity"] = set()
 
     def __init__(
         self,
@@ -42,7 +45,7 @@ class PhysicsEntity:
 
         self.velocity = pygame.Vector2()
 
-        self.gravity_scale = 1
+        self.obey_gravity = True
 
         self.flipped = False
 
@@ -58,6 +61,21 @@ class PhysicsEntity:
         self.offset = offset
         self.pos = pygame.Vector2(pos)
         self.size = size
+
+    @classmethod
+    def add(cls, instance: "PhysicsEntity"):
+        cls.__instances.add(instance)
+
+    @classmethod
+    def remove(cls, instance: "PhysicsEntity"):
+        cls.__instances.remove(instance)
+
+    @classmethod
+    def render_all(cls, dt: float):
+        surface = cls.game.screen
+        for bat in cls.__instances:
+            bat.update(dt)
+            bat.render(surface)
 
     def rect(self):
         return pygame.Rect(self.pos, self.size)
@@ -137,14 +155,9 @@ class PhysicsEntity:
             hitbox.move(0, -1).collidelist(tiles_rect_around) >= 0
         )
 
+    @abstractmethod
     def handle_movement(self, dt: float):
-        frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
-        self.pos[0] += frame_movement_x
-        self.collision_horizontal()
-
-        self.velocity.y += self.gravity_scale * GRAVITY * dt
-        self.pos[1] += self.velocity.y * dt
-        self.collision_vertical()
+        pass
 
     def update(self, dt: float):
         self.handle_movement(dt)
@@ -152,7 +165,7 @@ class PhysicsEntity:
         self.manage_state()
         self.animation.update()
 
-    def render(self):
+    def render(self, surface: pygame.Surface):
         frame = self.animation.get_frame()
         render_pos = self.pos - self.game.scroll
 
@@ -164,5 +177,5 @@ class PhysicsEntity:
         hitbox = self.hitbox()
         pos = hitbox.topleft - self.game.scroll
         size = hitbox.size
-        self.game.screen.blit(frame, render_pos)
-        pgdebug_rect(self.game.screen, (pos, size))
+        surface.blit(frame, render_pos)
+        pgdebug_rect(surface, (pos, size))

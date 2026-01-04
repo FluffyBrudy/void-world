@@ -77,7 +77,7 @@ class Player(PhysicsEntity):
         else:
             self.flip_timer.reset_to_now()
 
-        if self.current_state.name in ("idle", "run"):
+        if self.current_state.name in ("idle", "run", "jump"):
             if keys[pygame.K_UP]:
                 self.jump()
         if keys[pygame.K_SPACE]:
@@ -105,12 +105,20 @@ class Player(PhysicsEntity):
 
     def jump(self):
         self.velocity.y = int(-JUMP_DISTANCE * 2)
-        self.is_jumping = True
 
     def attack(self):
         if not self.is_attacking and self.attack_timer.has_reach_interval():
             self.set_state("attack")
             self.is_attacking = True
+
+    def handle_movement(self, dt: float):
+        frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
+        self.pos[0] += frame_movement_x
+        self.collision_horizontal()
+
+        self.velocity.y += GRAVITY * dt
+        self.pos[1] += self.velocity.y * dt
+        self.collision_vertical()
 
     @override
     def update(self, dt: float):
@@ -121,6 +129,7 @@ class Player(PhysicsEntity):
             self.velocity.y = min(
                 self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
             )
+
         super().update(dt)
 
     @override
@@ -130,9 +139,9 @@ class Player(PhysicsEntity):
             self.attack_timer.reset_to_now()
         super().manage_state()
 
-    def render(self):
+    def render(self, surface: pygame.Surface):
         # hbox = self.attack_hitbox()
         # pos = hbox.topleft - self.game.scroll
         # pgdebug_rect(self.game.screen, (pos, hbox.size))
         pgdebug(f"{self.flipped}")
-        return super().render()
+        return super().render(surface)
