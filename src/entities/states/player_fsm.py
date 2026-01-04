@@ -1,12 +1,13 @@
-from typing import TYPE_CHECKING, List, Callable, Optional
+from typing import TYPE_CHECKING, Optional
+from entities.states.base_fsm import State
 
 if TYPE_CHECKING:
     from entities.physics_entity import PhysicsEntity
 
 
-class State:
-    def __init__(self, name: str):
-        self.name = name
+class IdleState(State):
+    def __init__(self):
+        super().__init__("idle")
 
     def enter(self, entity: "PhysicsEntity"):
         pass
@@ -15,21 +16,9 @@ class State:
         pass
 
     def update(self, entity: "PhysicsEntity", **kwargs):
-        """for future" maybe if i feel i need"""
         pass
 
     def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
-        return None
-
-    def __str__(self) -> str:
-        return self.name
-
-
-class IdleState(State):
-    def __init__(self):
-        super().__init__("idle")
-
-    def can_transition(self, entity: "PhysicsEntity"):
         if not entity.grounded():
             return "jump"
         if entity.velocity.x != 0:
@@ -41,7 +30,16 @@ class IdleTurnState(State):
     def __init__(self):
         super().__init__("idleturn")
 
-    def can_transition(self, entity: "PhysicsEntity"):
+    def enter(self, entity: "PhysicsEntity"):
+        pass
+
+    def exit(self, entity: "PhysicsEntity"):
+        pass
+
+    def update(self, entity: "PhysicsEntity", **kwargs):
+        pass
+
+    def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
         if not entity.grounded():
             return "jump"
         if entity.velocity.x != 0:
@@ -55,15 +53,23 @@ class JumpState(State):
     def __init__(self):
         super().__init__("jump")
 
-    def can_transition(self, entity: "PhysicsEntity"):
+    def enter(self, entity: "PhysicsEntity"):
+        pass
+
+    def exit(self, entity: "PhysicsEntity"):
+        pass
+
+    def update(self, entity: "PhysicsEntity", **kwargs):
+        pass
+
+    def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
         if entity.grounded():
             return "idle"
-        elif entity.velocity.y > 0:
+        if entity.velocity.y > 0:
             return "fall"
-        slideable = getattr(entity, "can_slide")
+        slideable = getattr(entity, "can_slide", None)
         if slideable and slideable():
             return "wallslide"
-
         return None
 
 
@@ -71,13 +77,21 @@ class FallState(State):
     def __init__(self):
         super().__init__("fall")
 
-    def can_transition(self, entity: "PhysicsEntity"):
+    def enter(self, entity: "PhysicsEntity"):
+        pass
+
+    def exit(self, entity: "PhysicsEntity"):
+        pass
+
+    def update(self, entity: "PhysicsEntity", **kwargs):
+        pass
+
+    def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
         if entity.grounded():
             return "idle"
-        slideable = getattr(entity, "can_slide")
+        slideable = getattr(entity, "can_slide", None)
         if slideable and slideable():
             return "wallslide"
-
         return None
 
 
@@ -85,12 +99,20 @@ class RunState(State):
     def __init__(self):
         super().__init__("run")
 
-    def can_transition(self, entity: "PhysicsEntity"):
+    def enter(self, entity: "PhysicsEntity"):
+        pass
+
+    def exit(self, entity: "PhysicsEntity"):
+        pass
+
+    def update(self, entity: "PhysicsEntity", **kwargs):
+        pass
+
+    def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
         if not entity.grounded():
             return "jump"
         if entity.velocity.x == 0:
             return "idle"
-
         return None
 
 
@@ -98,8 +120,14 @@ class SlideState(State):
     def __init__(self):
         super().__init__("wallslide")
 
-    def can_transition(self, entity: "PhysicsEntity"):
-        slideable = getattr(entity, "can_slide")
+    def enter(self, entity: "PhysicsEntity"):
+        pass
+
+    def update(self, entity: "PhysicsEntity", **kwargs):
+        pass
+
+    def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
+        slideable = getattr(entity, "can_slide", None)
         if slideable and not slideable():
             return "jump" if not entity.grounded() else "idle"
         return None
@@ -112,12 +140,16 @@ class AttackState(State):
     def __init__(self):
         super().__init__("attack")
 
+    def update(self, entity: "PhysicsEntity", **kwargs):
+        pass
+
+    def exit(self, entity: "PhysicsEntity"):
+        pass
+
     def enter(self, entity: "PhysicsEntity"):
         entity.velocity.x = 0
 
     def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
         if entity.animation.has_animation_end():
-            if not entity.grounded():
-                return "jump"
-            return "idle"
+            return "jump" if not entity.grounded() else "idle"
         return None

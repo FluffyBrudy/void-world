@@ -3,28 +3,11 @@ from typing import (
     Dict,
     Literal,
     Tuple,
-    override,
 )
 import pygame
-from constants import (
-    BASE_SPEED,
-    GRAVITY,
-    JUMP_DISTANCE,
-    MAX_FALL_SPEED,
-    WALL_FRICTION_COEFFICIENT,
-)
-from .states.player_fsm import (
-    AttackState,
-    FallState,
-    IdleState,
-    IdleTurnState,
-    JumpState,
-    RunState,
-    SlideState,
-    State,
-)
-from pydebug import pgdebug, pgdebug_rect
-from utils.timer import Timer
+from constants import BASE_SPEED, GRAVITY
+from .states.player_fsm import State
+from pydebug import pgdebug_rect
 
 if TYPE_CHECKING:
     from game import Game
@@ -53,11 +36,13 @@ class PhysicsEntity:
         default_state = "idle" if "idle" in self.states else list(self.states.keys())[0]
         self.current_state: State = self.states[default_state]
 
-        self.animation = self.game.assets[etype + "/" + "idle"]
+        self.animation = self.game.assets[etype + "/" + default_state]
 
         self.etype = etype
 
         self.velocity = pygame.Vector2()
+
+        self.gravity_scale = 1
 
         self.flipped = False
 
@@ -157,7 +142,7 @@ class PhysicsEntity:
         self.pos[0] += frame_movement_x
         self.collision_horizontal()
 
-        self.velocity.y += GRAVITY * dt
+        self.velocity.y += self.gravity_scale * GRAVITY * dt
         self.pos[1] += self.velocity.y * dt
         self.collision_vertical()
 
