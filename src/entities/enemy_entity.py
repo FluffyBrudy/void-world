@@ -40,6 +40,7 @@ class Bat(PhysicsEntity):
             if collided[1]:
                 self.velocity.x = 0
                 self.velocity.y = 0
+                self.flipped = player.flipped
                 self.set_state("attack")
         elif self.default_pos.distance_squared_to(self.pos) >= 9:  # for tolorance
             self.set_state("fly")
