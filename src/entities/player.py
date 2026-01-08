@@ -88,11 +88,6 @@ class Player(PhysicsEntity):
         else:
             self.velocity.x = 0
 
-    def dash(self):
-        if not self.is_dashing and self.dash_timer.has_reach_interval():
-            self.is_dashing = True
-            self.dash_timer.reset_to_now()
-
     def can_slide(self):
         hitbox = self.hitbox()
         pos_x = hitbox.right
