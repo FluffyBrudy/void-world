@@ -14,6 +14,8 @@ class Animation:
         self.frames_len = len(frames)
         self.animation_speed = animation_speed
 
+        self.__locked = False
+
     def copy(self):
         return self.__class__(
             frames=self.frames,
@@ -31,7 +33,9 @@ class Animation:
         return self.frames[int(self.frame_index)]
 
     def update(self):
-        self.frame_index += self.animation_speed
+        if self.__locked:
+            return
+        self.frame_index = round(self.frame_index + self.animation_speed, 2)
         if self.has_animation_end():
             if self.loop:
                 self.reset_animation()
@@ -51,6 +55,16 @@ class Animation:
             self.animation_speed = animation_speed
         self.frames = frames
         self.frames_len = len(self.frames)
+
+    def lock(self):
+        self.__locked = True
+
+    def release_lock(self):
+        self.__locked = False
+
+    @property
+    def is_locked(self):
+        return self.__locked
 
 
 class PostAnimatableAnimation(Animation):
