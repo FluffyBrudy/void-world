@@ -1,24 +1,25 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, TypeVar, Generic
 
 if TYPE_CHECKING:
     from entities.physics_entity import PhysicsEntity
 
+TEntity = TypeVar("TEntity", bound="PhysicsEntity")
 
-class State:
+
+class State(Generic[TEntity]):
     def __init__(self, name: str):
         self.name = name
 
-    def enter(self, entity: "PhysicsEntity"):
+    def enter(self, entity: TEntity) -> None:
         ...
 
-    def exit(self, entity: "PhysicsEntity"):
+    def exit(self, entity: TEntity) -> None:
         ...
 
-    def update(self, entity: "PhysicsEntity", **kwargs):
-        """for future" maybe if i feel i need"""
+    def update(self, entity: TEntity, **kwargs) -> None:
         ...
 
-    def can_transition(self, entity: "PhysicsEntity") -> Optional[str]:
+    def can_transition(self, entity: TEntity) -> Optional[str]:
         ...
 
     def __str__(self) -> str:

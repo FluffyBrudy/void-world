@@ -7,7 +7,6 @@ from typing import (
     Tuple,
 )
 import pygame
-from constants import BASE_SPEED, GRAVITY
 from .states.player_fsm import State
 from pydebug import pgdebug_rect
 
@@ -19,7 +18,44 @@ T4Directions = Literal["up", "down", "left", "right"]
 TContactSides = Dict[T4Directions, bool]
 
 
-class PhysicsEntity(ABC):
+class BaseEntity(ABC):
+    etype: str
+    pos: pygame.Vector2
+    size: Tuple[int, int]
+    velocity: pygame.Vector2
+    contact_sides: TContactSides
+    flipped: bool
+
+    @abstractmethod
+    def hitbox(self) -> pygame.Rect:
+        ...
+
+    @abstractmethod
+    def grounded(self) -> bool:
+        ...
+
+    @abstractmethod
+    def set_state(self, new_state: str):
+        ...
+
+    @abstractmethod
+    def manage_state(self):
+        ...
+
+    @abstractmethod
+    def handle_movement(self, dt: float):
+        ...
+
+    @abstractmethod
+    def update(self, dt: float):
+        ...
+
+    @abstractmethod
+    def render(self, surface: pygame.Surface):
+        ...
+
+
+class PhysicsEntity(BaseEntity):
     game: "Game" = None  # type: ignore
     __instances: Set["PhysicsEntity"] = set()
 
@@ -78,7 +114,7 @@ class PhysicsEntity(ABC):
             bat.render(surface)
 
     def rect(self):
-        return pygame.Rect(self.pos, self.size)
+        return pygame.Rect(self.pos, self.animation.get_frame().size)
 
     def hitbox(self):
         x, y = self.pos
@@ -174,8 +210,5 @@ class PhysicsEntity(ABC):
 
         render_pos.x += (self.size[0] - frame.get_width()) / 2
         render_pos.y += (self.size[1] - frame.get_height()) / 2
-        hitbox = self.hitbox()
-        pos = hitbox.topleft - self.game.scroll
-        size = hitbox.size
+
         surface.blit(frame, render_pos)
-        pgdebug_rect(surface, (pos, size))

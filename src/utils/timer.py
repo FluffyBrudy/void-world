@@ -32,3 +32,7 @@ class Timer:
         return (pygame.time.get_ticks() - self.start_timer) >= int(
             self.interval * interval_ratio
         )
+
+    def stale(self):
+        if self.interval > 0:
+            self.start_timer -= self.interval - 1

@@ -1,6 +1,8 @@
 from typing import Optional, Sequence, override
 from pygame import Surface
 
+from utils.timer import Timer
+
 
 class Animation:
     # __slots__ = ("frames", "frames_len", "loop", "frame_index", "animation_speed")
@@ -66,6 +68,9 @@ class Animation:
     def is_locked(self):
         return self.__locked
 
+    def safe_frame_index(self):
+        return int(self.frame_index) % len(self.frames)
+
 
 class PostAnimatableAnimation(Animation):
     # __slots__ = ("post_frames", "__reshaped", "loop")
@@ -104,3 +109,40 @@ class PostAnimatableAnimation(Animation):
             post_animation_speed=self.post_animation_speed,
             loop=self.loop,
         )
+
+
+class TimerAnimation:
+    __slots__ = ("frames", "loop", "_timer", "_current_index")
+
+    def __init__(
+        self, frames: Sequence[Surface], frame_duration_ms: int = 100, loop=True
+    ) -> None:
+        self.frames = frames
+        self.loop = loop
+        self._current_index = 0
+        self._timer = Timer(frame_duration_ms)
+
+    def get_frame(self) -> Surface:
+        return self.frames[self._current_index]
+
+    def update(self):
+        if self._timer.has_reach_interval():
+            self._current_index += 1
+            self._timer.reset_to_now()
+
+            if self._current_index >= len(self.frames):
+                if self.loop:
+                    self._current_index = 0
+                else:
+                    self._current_index = len(self.frames) - 1
+
+    def reset_animation(self):
+        self._current_index = 0
+        self._timer.reset_to_now()
+
+    def has_animation_end(self) -> bool:
+        return not self.loop and self._current_index == len(self.frames) - 1
+
+    @property
+    def current_index(self) -> int:
+        return self._current_index

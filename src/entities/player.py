@@ -1,4 +1,4 @@
-from typing import Tuple, override
+from typing import Dict, Tuple, override
 import pygame
 from constants import (
     BASE_SPEED,
@@ -17,8 +17,10 @@ from entities.states.player_fsm import (
     SlideState,
 )
 from entities.physics_entity import PhysicsEntity
-from pydebug import pgdebug
+from pydebug import pgdebug, pgdebug_rect
 from utils.timer import Timer
+
+TAttackSizes = Dict[str, Tuple[int, int]]
 
 
 class Player(PhysicsEntity):
@@ -46,10 +48,17 @@ class Player(PhysicsEntity):
         self.is_dashing = False
         self.dash_timer = Timer(2000)
 
+    def set_attack_size(self, offsets: TAttackSizes):
+        self.attack_sizes = offsets
+
     def attack_hitbox(self):
-        x, y, w, h = self.hitbox()
-        multiplier = -1 if self.flipped else 1
-        return pygame.Rect(x + multiplier * w * 0.3, y, w, h)
+        """this version is valid, just need scale"""
+        hbox = self.hitbox()
+        if self.current_state.name != "attack":
+            return hbox
+        attack_w, attack_h = self.attack_sizes[self.current_state.name]
+        offset_x = (hbox.centerx - attack_w) if self.flipped else hbox.centerx
+        return pygame.Rect(offset_x, hbox.top, attack_w, attack_h)
 
     def input(self):
         if self.is_dashing:
@@ -112,7 +121,12 @@ class Player(PhysicsEntity):
             self.is_attacking = True
 
     def dash(self):
-        if not self.is_dashing and self.dash_timer.has_reach_interval():
+        if (
+            not self.current_state.name == "wallslide"
+            and not (self.contact_sides["left"] or self.contact_sides["right"])
+            and not self.is_dashing
+            and self.dash_timer.has_reach_interval()
+        ):
             self.is_dashing = True
             self.dash_timer.reset_to_now()
 
@@ -133,7 +147,9 @@ class Player(PhysicsEntity):
         self.velocity.x = 15 * direction  # velocity requires direction
         self.velocity.y = 0  # otherwise it will have trajectory path
 
-        if self.dash_timer.has_reached(0.15):
+        if self.dash_timer.has_reached(0.15) or (
+            self.contact_sides["left"] or self.contact_sides["right"]
+        ):
             self.is_dashing = False
             self.velocity.x = (
                 0  # because if x-comonent of velocity is not resett it keeps dashing
@@ -158,9 +174,11 @@ class Player(PhysicsEntity):
             self.attack_timer.reset_to_now()
         self.manage_dash()
         super().manage_state()
+        pgdebug(self.current_state)
 
     def render(self, surface: pygame.Surface):
-        # hbox = self.attack_hitbox()
-        # pos = hbox.topleft - self.game.scroll
-        # pgdebug_rect(self.game.screen, (pos, hbox.size))
+        if self.current_state.name == "attack":
+            hbox = self.attack_hitbox()
+            pos = hbox.topleft - self.game.scroll
+            pgdebug_rect(self.game.screen, (pos, hbox.size))
         return super().render(surface)
