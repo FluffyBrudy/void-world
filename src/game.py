@@ -1,5 +1,6 @@
 from typing import Dict
 import pygame
+from collision.collision_resolution import player_bat_collision
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.enemy_entity import Bat
 from entities.physics_entity import PhysicsEntity
@@ -12,6 +13,7 @@ from utils.animation import Animation, PostAnimatableAnimation
 
 TILEMAP_SCALE = 8
 PLAYER_SCALE = TILEMAP_SCALE / 2.5
+print(PLAYER_SCALE)
 
 
 class Game:
@@ -119,6 +121,15 @@ class Game:
                 0.2,
                 True,
             ),
+            "bat/hit": Animation(
+                load_images(
+                    ASSETS_PATH / "enemies" / "bat" / "hit",
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                ),
+                0.2,
+                True,
+            ),
         }
 
         self.level = 0
@@ -133,7 +144,9 @@ class Game:
 
         self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
 
-        Bat.add(Bat((0, 0), self.assets["bat/fly"].get_frame().size))
+        bat = Bat((0, 0), self.assets["bat/fly"].get_frame().size)
+        Bat.add(bat)
+        Bat.add_to_group(bat)
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -166,11 +179,17 @@ class Game:
         self.scroll.y += (target_scroll_y - scroll_y) * 0.05
         pgdebug(self.scroll)
 
+    def handle_collision(self):
+        player = self.player
+        for bat in Bat.get_instances():
+            player_bat_collision(player, bat)
+
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0
         self.dt = dt
         self.handle_event()
         self.deadzone_camera()
+        self.handle_collision()
         self.player.update(dt)
 
     def render_all(self):
