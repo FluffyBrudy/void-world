@@ -39,6 +39,10 @@ class BaseEntity(ABC):
         ...
 
     @abstractmethod
+    def get_state(self) -> str:
+        ...
+
+    @abstractmethod
     def manage_state(self):
         ...
 
@@ -131,6 +135,9 @@ class PhysicsEntity(BaseEntity):
         if new_state != self.current_state.name:
             self.current_state = self.states[new_state]
             self.animation = self.game.assets[self.etype + "/" + new_state].copy()
+
+    def get_state(self) -> str:
+        return self.current_state.name
 
     def manage_state(self):
         next_state = self.current_state.can_transition(self)

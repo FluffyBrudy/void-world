@@ -95,14 +95,13 @@ class AttackState(State["Bat"]):
         if entity.target is None:
             return None
 
-        if entity.animation.has_animation_end():
-            return "fly"
+        animation_ended = entity.animation.has_animation_end()
+        if not animation_ended:
+            return None
 
         distance = (entity.pos).distance_to(entity.target.pos)
-
         if distance > entity.chase_radius:
             return "fly"
-
         if distance > entity.attack_radius:
             return "chase"
 

@@ -7,4 +7,5 @@ if TYPE_CHECKING:
 
 
 def player_bat_collision(player: "Player", bat: "Bat"):
-    pass
+    if bat.get_state() == "attack":
+        pass
