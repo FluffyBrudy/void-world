@@ -8,8 +8,10 @@ from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug, pgdebug
+from ttypes.index_type import UIOptions
 from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation, PostAnimatableAnimation
+from widgets.components.healthbar import SimpleHealthbarUI
 
 TILEMAP_SCALE = 10
 PLAYER_SCALE = TILEMAP_SCALE / 2.5
@@ -175,6 +177,9 @@ class Game:
         Bat.add(bat)
         Bat.add_to_group(bat)
 
+        self.healthbar = SimpleHealthbarUI(margin_x=100)
+        self.healthbar.target_ratio = 0.1
+
     def handle_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -227,6 +232,8 @@ class Game:
         PhysicsEntity.render_all(self.dt)
         self.tilemap.render()
         Debug.draw_all(self.screen)
+        self.healthbar.update()
+        self.healthbar.render(self.screen)
         pygame.display.flip()
 
 

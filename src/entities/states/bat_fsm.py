@@ -125,6 +125,7 @@ class HitState(State["Bat"]):
 
     def enter(self, entity: "Bat") -> None:
         entity.hit_timer.reset_to_now()
+        entity.velocity *= 0
 
     def can_transition(self, entity: "Bat"):
         if entity.hit_timer.has_reach_interval():
