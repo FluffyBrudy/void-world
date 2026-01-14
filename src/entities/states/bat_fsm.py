@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from constants import BASE_SPEED
+from entities.player import Player
 from entities.states.base_fsm import State
 
 
@@ -23,13 +24,11 @@ class FlyState(State["Bat"]):
             return
 
         distance = entity.default_pos.distance_to(entity.pos)
-        if distance < 1:
-            entity.velocity *= 0
-        else:
-            vector_dir = (entity.default_pos - entity.pos).normalize()
-            entity.velocity = vector_dir * min(BASE_SPEED, distance)
-            if distance >= entity.size[0] // 2:
-                entity.flipped = vector_dir.x < 0
+        if distance == 0:
+            return
+        vector_dir = (entity.default_pos - entity.pos).normalize()
+        entity.velocity = vector_dir * min(BASE_SPEED, distance)
+        entity.flipped = vector_dir.x < 0
 
     def can_transition(self, entity: "Bat"):
         if entity.target is None:
@@ -66,6 +65,11 @@ class ChaseState(State["Bat"]):
         if entity.target is None:
             return None
 
+        if isinstance(entity.target, Player):
+            if not entity.target.hit_timer.has_reach_interval():
+                entity.velocity *= 0
+                return None
+
         distance = (entity.pos).distance_to(entity.target.pos)
         if distance > entity.chase_radius:
             return "fly"
@@ -95,13 +99,17 @@ class AttackState(State["Bat"]):
         if entity.target is None:
             return None
 
-        animation_ended = entity.animation.has_animation_end()
-        if not animation_ended:
+        if not entity.animation.has_animation_end():
             return None
 
+        if entity.animation.has_animation_end():
+            return "fly"
+
         distance = (entity.pos).distance_to(entity.target.pos)
+
         if distance > entity.chase_radius:
             return "fly"
+
         if distance > entity.attack_radius:
             return "chase"
 

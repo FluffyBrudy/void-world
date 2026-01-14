@@ -92,6 +92,17 @@ class Game:
                 0.2,
                 False,
             ),
+            "player/hit": Animation(
+                load_spritesheet(
+                    player_path / "hurt" / "hurt.png",
+                    (128, 128),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                    flip=(True, False),
+                ),
+                animation_speed=0.2,
+                loop=False,
+            ),
             "player/wallslide": Animation(
                 load_spritesheet(
                     player_path / "wallslide" / "wallslide.png",
@@ -135,7 +146,7 @@ class Game:
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
                 ),
-                0.3,
+                0.2,
                 True,
             ),
         }
@@ -207,6 +218,7 @@ class Game:
         self.deadzone_camera()
         self.handle_collision()
         self.player.update(dt)
+        pgdebug(f"player={self.player.hit_timer.has_reach_interval()}", 0)
 
     def render_all(self):
         self.screen.fill((50, 50, 100))

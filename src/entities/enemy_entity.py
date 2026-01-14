@@ -26,6 +26,7 @@ class Bat(PhysicsEntity):
         size: Tuple[int, int],
         offset: Tuple[int, int] = (0, 0),
         chase_radius=500,
+        attack_radius=None,
     ):
         states: Dict[str, State] = {
             "fly": FlyState(),
@@ -41,19 +42,29 @@ class Bat(PhysicsEntity):
         self.obey_gravity = False
         self.default_pos = Vector2(pos)
         self.hit_timer = Timer(2000)
-        self.attack_timer = Timer(1200)
+        self.attack_timer = Timer(1700)
 
         self.target: Optional["PhysicsEntity"] = None
 
-        self.attack_radius = self.hitbox().w // 2
+        self.attack_radius = attack_radius or self.hitbox().w // 2
         self.chase_radius = chase_radius
-
-    def handle_movement(self, dt: float):
-        self.pos.x += self.velocity.x * dt
-        self.pos.y += self.velocity.y * dt
 
     def set_target(self, target: "PhysicsEntity"):
         self.target = target
 
     def remove_target(self):
         self.target = None
+
+    def handle_movement(self, dt: float):
+        self.pos.x += self.velocity.x * dt
+        self.pos.y += self.velocity.y * dt
+
+    def can_chase(self, entity: "PhysicsEntity"):
+        """In case needed to check externally, dont use internally"""
+        distance = self.pos.distance_to(entity.pos)
+        return distance <= self.chase_radius
+
+    def can_attack(self, entity: "PhysicsEntity"):
+        """In case needed to check externally, dont use internally"""
+        distance = self.pos.distance_to(entity.pos)
+        return distance <= self.attack_radius

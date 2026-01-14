@@ -1,5 +1,6 @@
 from typing import Dict, Tuple, override
 import pygame
+from random import random
 from constants import (
     BASE_SPEED,
     GRAVITY,
@@ -15,6 +16,7 @@ from entities.states.player_fsm import (
     JumpState,
     RunState,
     SlideState,
+    HitState,
 )
 from entities.physics_entity import PhysicsEntity
 from pydebug import pgdebug, pgdebug_rect
@@ -38,6 +40,7 @@ class Player(PhysicsEntity):
             "idleturn": IdleTurnState(),
             "fall": FallState(),
             "wallslide": SlideState(),
+            "hit": HitState(),
         }
         super().__init__("player", pos, size, states, offset)
         self.movement_start_timer = Timer(200)
@@ -47,6 +50,7 @@ class Player(PhysicsEntity):
 
         self.is_dashing = False
         self.dash_timer = Timer(2000)
+        self.hit_timer = Timer(2000)
 
     def set_attack_size(self, offsets: TAttackSizes):
         self.attack_sizes = offsets
@@ -74,13 +78,13 @@ class Player(PhysicsEntity):
         if keys[pygame.K_LEFT]:
             if not self.flipped:
                 self.flipped = True
-                self.set_state("idleturn")
+                self.transition_to("idleturn")
             if self.movement_start_timer.has_reach_interval():
                 input_vector.x -= 2
         elif keys[pygame.K_RIGHT]:
             if self.flipped:
                 self.flipped = False
-                self.set_state("idleturn")
+                self.transition_to("idleturn")
             if self.movement_start_timer.has_reach_interval():
                 input_vector.x += 2
         else:
@@ -117,7 +121,7 @@ class Player(PhysicsEntity):
 
     def attack(self):
         if not self.is_attacking and self.attack_timer.has_reach_interval():
-            self.set_state("attack")
+            self.transition_to("attack")
             self.is_attacking = True
 
     def dash(self):
@@ -181,4 +185,10 @@ class Player(PhysicsEntity):
             hbox = self.attack_hitbox()
             pos = hbox.topleft - self.game.scroll
             pgdebug_rect(self.game.screen, (pos, hbox.size))
-        return super().render(surface)
+        if not self.is_dashing:
+            return super().render(surface)
+        else:
+            frame, pos = self.get_renderable()
+            frame_copy = frame.copy()
+            frame_copy.set_alpha(int(random() * 100))
+            surface.blit(frame_copy, pos)

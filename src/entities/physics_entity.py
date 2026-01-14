@@ -139,12 +139,15 @@ class PhysicsEntity(BaseEntity):
     def get_state(self) -> str:
         return self.current_state.name
 
+    def transition_to(self, new_state: str):
+        self.current_state.exit(self)
+        self.set_state(new_state)
+        self.current_state.enter(self)
+
     def manage_state(self):
         next_state = self.current_state.can_transition(self)
         if next_state is not None:
-            self.current_state.exit(self)
-            self.set_state(next_state)
-            self.current_state.enter(self)
+            self.transition_to(next_state)
         self.current_state.update(self)
 
     def collision_horizontal(self):
@@ -208,7 +211,7 @@ class PhysicsEntity(BaseEntity):
         self.manage_state()
         self.animation.update()
 
-    def render(self, surface: pygame.Surface):
+    def get_renderable(self):
         frame = self.animation.get_frame()
         render_pos = self.pos - self.game.scroll
 
@@ -218,4 +221,8 @@ class PhysicsEntity(BaseEntity):
         render_pos.x += (self.size[0] - frame.get_width()) / 2
         render_pos.y += (self.size[1] - frame.get_height()) / 2
 
+        return frame, render_pos
+
+    def render(self, surface: pygame.Surface):
+        frame, render_pos = self.get_renderable()
         surface.blit(frame, render_pos)
