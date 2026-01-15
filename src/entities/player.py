@@ -120,6 +120,8 @@ class Player(PhysicsEntity):
         self.velocity.y = int(-JUMP_DISTANCE * 2)
 
     def attack(self):
+        if self.get_state() == "hit":
+            return
         if not self.is_attacking and self.attack_timer.has_reach_interval():
             self.transition_to("attack")
             self.is_attacking = True
@@ -127,7 +129,6 @@ class Player(PhysicsEntity):
     def dash(self):
         if (
             not self.current_state.name == "wallslide"
-            and not (self.contact_sides["left"] or self.contact_sides["right"])
             and not self.is_dashing
             and self.dash_timer.has_reach_interval()
         ):
@@ -152,7 +153,8 @@ class Player(PhysicsEntity):
         self.velocity.y = 0  # otherwise it will have trajectory path
 
         if self.dash_timer.has_reached(0.15) or (
-            self.contact_sides["left"] or self.contact_sides["right"]
+            (self.contact_sides["left"] and self.flipped)
+            or (self.contact_sides["right"] and not self.flipped)
         ):
             self.is_dashing = False
             self.velocity.x = (

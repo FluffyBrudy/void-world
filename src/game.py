@@ -8,10 +8,9 @@ from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug, pgdebug
-from ttypes.index_type import UIOptions
 from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation, PostAnimatableAnimation
-from widgets.components.healthbar import SimpleHealthbarUI
+from widgets.healthbar import SimpleHealthbarUI
 
 TILEMAP_SCALE = 10
 PLAYER_SCALE = TILEMAP_SCALE / 2.5
