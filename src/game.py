@@ -2,7 +2,7 @@ from typing import Dict
 import pygame
 from collision.collision_resolution import player_bat_collision
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
-from entities.enemy_entity import Bat
+from entities.enemy_entity import Bat, Mushroom
 from entities.physics_entity import PhysicsEntity
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
@@ -150,12 +150,52 @@ class Game:
                 0.2,
                 True,
             ),
+            "mushroom/idle": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "mushroom" / "idle.png",
+                    (150, 150),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "mushroom/run": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "mushroom" / "run.png",
+                    (150, 150),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "mushroom/hit": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "mushroom" / "hit.png",
+                    (150, 150),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "mushroom/death": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "mushroom" / "death.png",
+                    (150, 150),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "mushroom/attack": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "mushroom" / "attack.png",
+                    (150, 150),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
         }
 
         self.level = 0
 
         player_base_size = self.assets["player/idle"].get_frame().size
-        self.player = Player((100, -400), player_base_size, (0, 0))
+        self.player = Player((1000, -400), player_base_size, (0, 0))
         self.player.set_attack_size(
             {
                 "attack": (int(32 * PLAYER_SCALE), int(43 * PLAYER_SCALE)),
@@ -172,12 +212,16 @@ class Game:
         self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
 
         bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
+        mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size)
         bat.set_target(self.player)
+        mushroom.set_target(self.player)
+        Mushroom.add(mushroom)
+        Mushroom.add_to_group(mushroom)
         Bat.add(bat)
         Bat.add_to_group(bat)
 
         self.healthbar = SimpleHealthbarUI(margin_x=100)
-        self.healthbar.target_ratio = 0.1
+        self.healthbar.target_ratio = 0.9
 
     def handle_event(self):
         for event in pygame.event.get():

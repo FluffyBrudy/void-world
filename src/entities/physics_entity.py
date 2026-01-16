@@ -7,6 +7,8 @@ from typing import (
     Tuple,
 )
 import pygame
+
+from constants import BASE_SPEED, GRAVITY
 from .states.player_fsm import State
 from pydebug import pgdebug_rect
 
@@ -226,3 +228,40 @@ class PhysicsEntity(BaseEntity):
     def render(self, surface: pygame.Surface):
         frame, render_pos = self.get_renderable()
         surface.blit(frame, render_pos)
+
+
+class AirEntity(PhysicsEntity):
+    def __init__(
+        self,
+        etype: str,
+        pos: Tuple[int, int],
+        size: Tuple[int, int],
+        states: Dict[str, State],
+        offset: Tuple[int, int] = (0, 0),
+    ):
+        super().__init__(etype, pos, size, states, offset)
+
+    def handle_movement(self, dt: float):
+        self.pos.x += self.velocity.x * dt
+        self.pos.y += self.velocity.y * dt
+
+
+class GroundEntity(PhysicsEntity):
+    def __init__(
+        self,
+        etype: str,
+        pos: Tuple[int, int],
+        size: Tuple[int, int],
+        states: Dict[str, State],
+        offset: Tuple[int, int] = (0, 0),
+    ):
+        super().__init__(etype, pos, size, states, offset)
+
+    def handle_movement(self, dt: float):
+        frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
+        self.pos[0] += frame_movement_x
+        self.collision_horizontal()
+
+        self.velocity.y += GRAVITY * dt
+        self.pos[1] += self.velocity.y * dt
+        self.collision_vertical()
