@@ -6,7 +6,7 @@ from collision.collision_resolution import (
 )
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.enemy_entity import Bat, Mushroom
-from entities.physics_entity import BaseEntity
+from entities.base_entity import BaseEntity
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap

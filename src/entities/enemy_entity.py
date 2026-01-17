@@ -3,7 +3,10 @@ from typing import Dict, Generic, Optional, Tuple, TypeVar, cast
 
 from pygame import Vector2
 
-from entities.physics_entity import AirEntity, GroundEntity, PhysicsEntity, BaseEntity
+from entities.air_entity import AirEntity
+from entities.base_entity import BaseEntity
+from entities.ground_entity import GroundEntity
+from entities.physics_entity import PhysicsEntity
 from entities.states.base_fsm import State
 from entities.states import bat_fsm as bat_fsm
 from entities.states import mushroom_fsm as mus_fsm
