@@ -1,7 +1,11 @@
 from pathlib import Path
 
-SCREEN_WIDTH = 1920
+SCREEN_WIDTH = 1800
 SCREEN_HEIGHT = 1080
+DEADZONE_CAMERA_THRESHOLD_X = (
+    SCREEN_WIDTH // 4,
+    SCREEN_WIDTH // 2 + SCREEN_WIDTH // 4,
+)
 FPS = 60
 
 BASE_PATH = Path.cwd().parent

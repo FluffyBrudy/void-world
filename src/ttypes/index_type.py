@@ -34,3 +34,4 @@ class UIOptions(BoxModel, total=False):
     border_radius: int
     border_color: ColorLike
     background: ColorLike
+    fill_color: ColorLike

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Unpack, cast
 import pygame
 from pygame import Surface
 
+from pydebug import pgdebug
 from ttypes.index_type import UIOptions
 
 from utils.interpolation import SimpleInterpolation
@@ -26,6 +27,7 @@ PROGRESSBAR_DEFAULTS = cast(
         "margin_y": 0,
         "border_color": (40, 44, 52, 255),
         "background": (33, 37, 43, 255),
+        "fill_color": (255, 255, 255, 255),
     },
 )
 
@@ -35,11 +37,11 @@ class ProgressBarUI(UIBase):
 
     def __init__(self, **overrides: Unpack[UIOptions]) -> None:
         options: UIOptions = {**PROGRESSBAR_DEFAULTS, **overrides}
+        print(options)
         super().__init__(options)
+        self.colors["fill"] = options.get("fill_color", (255, 255, 255, 255))
 
         self.interpolation = SimpleInterpolation(speed=0.05)
-        self.interpolation.set(0.5)
-        self.fill_color = (0, 255, 100, 255)
 
     def set_progress(self, value: float):
         self.interpolation.set(value)
@@ -56,12 +58,11 @@ class ProgressBarUI(UIBase):
         intrp_current = self.interpolation.current
         if intrp_current > 0:
             fill_width = int(self.box_model["content_width"] * intrp_current)
-
             inner_radius = max(0, self.border["radius"] - self.border["width"])
 
             pygame.draw.rect(
                 self.local_surface,
-                self.fill_color,
+                self.colors["fill"],
                 (
                     self.box_model["left"],
                     self.box_model["top"],

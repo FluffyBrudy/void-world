@@ -49,6 +49,10 @@ class UIBase:
             border_radius=max(0, border_radius - border_width),
         )
 
+    @property
+    def fullsize(self):
+        return (self.box_model["full_width"], self.box_model["full_height"])
+
     def render(self, screen: Surface):
         self.draw_base()
         pos = (self.box_model["offset_x"], self.box_model["offset_y"])

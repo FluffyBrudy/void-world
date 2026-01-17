@@ -21,6 +21,7 @@ from entities.states.player_fsm import (
 from entities.physics_entity import PhysicsEntity
 from pydebug import pgdebug, pgdebug_rect
 from utils.timer import Timer
+from widgets.components.progressbar import ProgressBarUI
 
 TAttackSizes = Dict[str, Tuple[int, int]]
 
@@ -51,6 +52,9 @@ class Player(PhysicsEntity):
         self.is_dashing = False
         self.dash_timer = Timer(2000)
         self.hit_timer = Timer(2000)
+
+        self.healthbar = ProgressBarUI(fill_color="lime")  # type: ignore
+        self.manabar = ProgressBarUI(fill_color="skyblue", margin_y=int(self.healthbar.fullsize[1] * 1.4))  # type: ignore
 
     def set_attack_size(self, offsets: TAttackSizes):
         self.attack_sizes = offsets
@@ -170,7 +174,8 @@ class Player(PhysicsEntity):
             self.velocity.y = min(
                 self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
             )
-
+        self.healthbar.update()
+        self.manabar.update()
         super().update(dt)
 
     @override
@@ -188,9 +193,12 @@ class Player(PhysicsEntity):
             pos = hbox.topleft - self.game.scroll
             pgdebug_rect(self.game.screen, (pos, hbox.size))
         if not self.is_dashing:
-            return super().render(surface)
+            super().render(surface)
         else:
             frame, pos = self.get_renderable()
             frame_copy = frame.copy()
             frame_copy.set_alpha(int(random() * 100))
             surface.blit(frame_copy, pos)
+
+        self.healthbar.render(surface)
+        self.manabar.render(surface)

@@ -4,7 +4,13 @@ from collision.collision_resolution import (
     player_bat_collision,
     player_mushroom_collision,
 )
-from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import (
+    ASSETS_PATH,
+    DEADZONE_CAMERA_THRESHOLD_X,
+    FPS,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+)
 from entities.enemy_entity import Bat, Mushroom
 from entities.base_entity import BaseEntity
 from entities.player import Player
@@ -237,17 +243,17 @@ class Game:
         self.scroll.x = scroll_x + (target_scroll_x - scroll_x) * 0.1
         self.scroll.y = scroll_y + (target_scroll_y - scroll_y) * 0.05
 
-    def deadzone_camera(self, left_threshold=520, right_threshold=1400):
+    def deadzone_camera(self):
         sh = self.screen.size[1]
         player_rect = self.player.rect()
         scroll_x, scroll_y = self.scroll
         target_scroll_x = scroll_x
         target_scroll_y = player_rect.centery - sh // 2
 
-        if player_rect.centerx < scroll_x + left_threshold:
-            target_scroll_x = player_rect.centerx - left_threshold
-        elif player_rect.centerx > scroll_x + right_threshold:
-            target_scroll_x = player_rect.centerx - right_threshold
+        if player_rect.centerx < scroll_x + DEADZONE_CAMERA_THRESHOLD_X[0]:
+            target_scroll_x = player_rect.centerx - DEADZONE_CAMERA_THRESHOLD_X[0]
+        elif player_rect.centerx > scroll_x + DEADZONE_CAMERA_THRESHOLD_X[1]:
+            target_scroll_x = player_rect.centerx - DEADZONE_CAMERA_THRESHOLD_X[1]
 
         self.scroll.x += (target_scroll_x - scroll_x) * 0.1
         self.scroll.y += (target_scroll_y - scroll_y) * 0.05
