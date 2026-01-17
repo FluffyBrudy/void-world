@@ -1,6 +1,9 @@
 from typing import Dict
 import pygame
-from collision.collision_resolution import player_bat_collision
+from collision.collision_resolution import (
+    player_bat_collision,
+    player_mushroom_collision,
+)
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.enemy_entity import Bat, Mushroom
 from entities.physics_entity import BaseEntity
@@ -171,7 +174,9 @@ class Game:
                     (150, 150),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                0.2,
+                False,
             ),
             "mushroom/death": Animation(
                 load_spritesheet(
@@ -187,14 +192,16 @@ class Game:
                     (150, 150),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                animation_speed=0.2,
+                loop=False,
             ),
         }
 
         self.level = 0
 
         player_base_size = self.assets["player/idle"].get_frame().size
-        self.player = Player((1000, -400), player_base_size, (0, 0))
+        self.player = Player((400, -400), player_base_size, (0, 0))
         self.player.set_attack_size(
             {
                 "attack": (int(32 * PLAYER_SCALE), int(43 * PLAYER_SCALE)),
@@ -250,6 +257,8 @@ class Game:
         player = self.player
         for bat in Bat.get_by_group():
             player_bat_collision(player, bat)
+        for mushroom in Mushroom.get_by_group():
+            player_mushroom_collision(player, mushroom)
 
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0

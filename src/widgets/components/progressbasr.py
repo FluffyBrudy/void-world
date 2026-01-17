@@ -40,6 +40,9 @@ class ProgressBarUI(UIBase):
     def set_health(self, value: float):
         self.interpolation.set(value)
 
+    def get_health(self):
+        return self.interpolation.current * self.box_model["content_width"]
+
     def update(self):
         self.interpolation.update()
 

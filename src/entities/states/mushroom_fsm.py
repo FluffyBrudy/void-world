@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from constants import BASE_SPEED
 from entities.player import Player
 from entities.states.base_fsm import State
 
@@ -13,60 +12,55 @@ class IdleState(State["Mushroom"]):
         super().__init__("idle")
 
     def enter(self, entity: "Mushroom"):
-        pass
-
-    def exit(self, entity: "Mushroom"):
-        pass
-
-    def update(self, entity: "Mushroom", **kwargs):
-        pass
+        entity.velocity *= 0
 
     def can_transition(self, entity: "Mushroom"):
-        if entity.velocity.x != 0:
+        if entity.target is None:
+            return None
+
+        if entity.can_chase(entity.target) and not entity.is_target_vulnarable():
             return "run"
+
         return None
 
 
-class ChaseState(State["Mushroom"]):
+class RunState(State["Mushroom"]):
     def __init__(self):
-        super().__init__("chase")
+        super().__init__("run")
 
     def update(self, entity: "Mushroom", **kwargs):
         if entity.target is None:
             return None
 
-        if not entity.attack_timer.has_reach_interval():
-            entity.velocity *= 0
-            return
-
         distance_x = entity.target.pos.x - entity.pos.x
-        distance_y = entity.target.pos.y - entity.pos.y
+        if distance_x != 0:
+            direction = distance_x / abs(distance_x)
+        else:
+            direction = 0
 
-        if abs(distance_y) > entity.size[0]:
-            return
-        if abs(distance_x) <= entity.chase_radius:
-            entity.velocity.x = distance_x * min(BASE_SPEED, distance_x)
-            entity.flipped = distance_x < 0
+        entity.velocity.x = direction
+        entity.flipped = distance_x < 0
 
     def can_transition(self, entity: "Mushroom"):
         if entity.target is None:
+            return None
+
+        if entity.is_target_vulnarable():
             return "idle"
 
-        if isinstance(entity.target, Player):
-            if not entity.target.hit_timer.has_reach_interval():
-                entity.velocity *= 0
-                return "idle"
-
-        distance_x = entity.target.pos.x - entity.pos.x
-        if abs(distance_x) <= entity.chase_radius:
-            return "run"
         if (
             entity.can_attack(entity.target)
             and entity.attack_timer.has_reach_interval()
         ):
             return "attack"
 
+        if not entity.can_chase(entity.target):
+            return "idle"
+
         return None
+
+    def exit(self, entity: "Mushroom") -> None:
+        entity.velocity.x *= 0
 
 
 class AttackState(State["Mushroom"]):
@@ -88,10 +82,10 @@ class AttackState(State["Mushroom"]):
 
 class HitState(State["Mushroom"]):
     def __init__(self):
-        super().__init__("attack")
+        super().__init__("hit")
 
     def enter(self, entity: "Mushroom"):
-        entity.velocity *= 0
+        entity.velocity.x *= 0
 
     def can_transition(self, entity: "Mushroom"):
         if entity.target is None:

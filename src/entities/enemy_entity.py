@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Optional, Set, Tuple, Type, TypeVar
+from typing import Dict, Generic, Optional, Tuple, TypeVar, cast
 
 from pygame import Vector2
 
-from entities.physics_entity import AirEntity, GroundEntity, PhysicsEntity
+from entities.physics_entity import AirEntity, GroundEntity, PhysicsEntity, BaseEntity
 from entities.states.base_fsm import State
-from entities.states.bat_fsm import FlyState, ChaseState, AttackState, HitState
-from entities.states.mushroom_fsm import DeathState, IdleState
-from entities.states.player_fsm import RunState
+from entities.states import bat_fsm as bat_fsm
+from entities.states import mushroom_fsm as mus_fsm
+from pydebug import pgdebug
 from utils.timer import Timer
 
-TEntity = TypeVar("TEntity", bound="PhysicsEntity")
+TEntity = TypeVar("TEntity", bound="BaseEntity")
 
 
 class Enemy(Generic[TEntity], ABC):
@@ -20,23 +20,27 @@ class Enemy(Generic[TEntity], ABC):
         attack_timer_ms: int = 1700,
         chase_radius: int = 500,
     ) -> None:
-        self.target: Optional["PhysicsEntity"] = None
+        self.target: Optional["BaseEntity"] = None
         self.hit_timer = Timer(hit_timer_ms)
         self.attack_timer = Timer(attack_timer_ms)
         self.chase_radius = chase_radius
 
-    def set_target(self, target: "PhysicsEntity"):
+    def set_target(self, target: "BaseEntity"):
         self.target = target
 
     def remove_target(self):
         self.target = None
 
+    def is_target_vulnarable(self):
+        hit_timer = cast(Optional[Timer], getattr(self.target, "hit_timer"))
+        return hit_timer is not None and not hit_timer.has_reach_interval()
+
     @abstractmethod
-    def can_chase(self, entity: "PhysicsEntity") -> bool:
+    def can_chase(self, entity: "BaseEntity") -> bool:
         ...
 
     @abstractmethod
-    def can_attack(self, entity: "PhysicsEntity") -> bool:
+    def can_attack(self, entity: "BaseEntity") -> bool:
         ...
 
 
@@ -53,10 +57,10 @@ class Bat(AirEntity, Enemy["Bat"]):
         attack_timer_ms: int = 1700,
     ):
         states: Dict[str, State] = {
-            "fly": FlyState(),
-            "chase": ChaseState(),
-            "attack": AttackState(),
-            "hit": HitState(),
+            "fly": bat_fsm.FlyState(),
+            "chase": bat_fsm.ChaseState(),
+            "attack": bat_fsm.AttackState(),
+            "hit": bat_fsm.HitState(),
         }
         AirEntity.__init__(self, "bat", pos, size, states, offset)
         Enemy.__init__(self, hit_timer_ms, attack_timer_ms, chase_radius)
@@ -69,11 +73,11 @@ class Bat(AirEntity, Enemy["Bat"]):
 
         self.attack_radius = attack_radius or self.hitbox().w // 2
 
-    def can_chase(self, entity: "PhysicsEntity"):
+    def can_chase(self, entity: "BaseEntity"):
         distance = self.pos.distance_to(entity.pos)
         return distance <= self.chase_radius
 
-    def can_attack(self, entity: "PhysicsEntity"):
+    def can_attack(self, entity: "BaseEntity"):
         distance = self.pos.distance_to(entity.pos)
         return distance <= self.attack_radius
 
@@ -87,21 +91,26 @@ class Mushroom(GroundEntity, Enemy["Mushroom"]):
         offset: Tuple[int, int] = (0, 0),
         hit_timer_ms: int = 2000,
         attack_timer_ms: int = 1700,
-        chase_radius: int = 500,
+        chase_radius: int = 400,
     ):
         states = {
-            "idle": IdleState(),
-            "attack": AttackState(),
-            "death": DeathState(),
-            "hit": HitState(),
-            "run": RunState(),
+            "idle": mus_fsm.IdleState(),
+            "attack": mus_fsm.AttackState(),
+            "death": mus_fsm.DeathState(),
+            "hit": mus_fsm.HitState(),
+            "run": mus_fsm.RunState(),
         }
         GroundEntity.__init__(self, "mushroom", pos, size, states, offset)
         Enemy.__init__(self, hit_timer_ms, attack_timer_ms, chase_radius)
 
-    def can_chase(self, entity: "PhysicsEntity") -> bool:
-        distance = self.pos.distance_to(entity.pos)
-        return distance <= self.chase_radius
+    def can_chase(self, entity: "BaseEntity"):
+        distance_y = abs(entity.pos.y - self.pos.y)
+        distance_x = entity.pos.x - self.pos.x
+        return distance_y <= self.size[1] and abs(distance_x) <= self.chase_radius
 
-    def can_attack(self, entity: "PhysicsEntity") -> bool:
+    def can_attack(self, entity: "BaseEntity") -> bool:
         return self.rect().colliderect(entity.hitbox())
+
+    def update(self, dt: float):
+        pgdebug(f"state={self.get_state()}")
+        return super().update(dt)

@@ -65,10 +65,9 @@ class ChaseState(State["Bat"]):
         if entity.target is None:
             return None
 
-        if isinstance(entity.target, Player):
-            if not entity.target.hit_timer.has_reach_interval():
-                entity.velocity *= 0
-                return None
+        if entity.is_target_vulnarable():
+            entity.velocity *= 0
+            return None
 
         distance = (entity.pos).distance_to(entity.target.pos)
         if distance > entity.chase_radius:
