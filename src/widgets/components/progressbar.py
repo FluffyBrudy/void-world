@@ -13,15 +13,19 @@ if TYPE_CHECKING:
     from game import Game
 
 
-HEALTH_BAR_DEFAULTS = cast(
+PROGRESSBAR_DEFAULTS = cast(
     UIOptions,
     {
-        "width": 200,
-        "height": 20,
+        "width": 250,
+        "height": 24,
         "border_width": 2,
-        "border_radius": 5,
-        "border_color": (50, 50, 50, 255),
-        "background": (100, 30, 30, 255),
+        "border_radius": 6,
+        "padding_x": 2,
+        "padding_y": 2,
+        "margin_x": 0,
+        "margin_y": 0,
+        "border_color": (40, 44, 52, 255),
+        "background": (33, 37, 43, 255),
     },
 )
 
@@ -30,23 +34,23 @@ class ProgressBarUI(UIBase):
     game: "Game" = None  # type: ignore
 
     def __init__(self, **overrides: Unpack[UIOptions]) -> None:
-        options: UIOptions = {**HEALTH_BAR_DEFAULTS, **overrides}
+        options: UIOptions = {**PROGRESSBAR_DEFAULTS, **overrides}
         super().__init__(options)
 
         self.interpolation = SimpleInterpolation(speed=0.05)
         self.interpolation.set(0.5)
         self.fill_color = (0, 255, 100, 255)
 
-    def set_health(self, value: float):
+    def set_progress(self, value: float):
         self.interpolation.set(value)
 
-    def get_health(self):
+    def get_progress(self):
         return self.interpolation.current * self.box_model["content_width"]
 
     def update(self):
         self.interpolation.update()
 
-    def render(self, screen: Surface):
+    def render(self, screen: Surface, pos_offset=(0, 0)):
         self.draw_base()
 
         intrp_current = self.interpolation.current
@@ -67,5 +71,9 @@ class ProgressBarUI(UIBase):
                 border_radius=inner_radius,
             )
 
-        pos = (self.box_model["offset_x"], self.box_model["offset_y"])
+        pos_offset_x, pos_offset_y = pos_offset
+        pos = (
+            self.box_model["offset_x"] + pos_offset_x,
+            self.box_model["offset_y"] + pos_offset_y,
+        )
         screen.blit(self.local_surface, pos)
