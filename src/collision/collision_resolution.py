@@ -24,7 +24,7 @@ def player_bat_collision(player: "Player", bat: "Bat", /):
             and bat.animation.frame_index >= bat.animation.frames_len // 2
         ):
             player.transition_to("hit")
-            player.healthbar.set_progress(0.5)
+            player.take_damage(0.1)
 
 
 def player_mushroom_collision(player: "Player", mushroom: "Mushroom", /):
@@ -44,3 +44,4 @@ def player_mushroom_collision(player: "Player", mushroom: "Mushroom", /):
             and mushroom.animation.has_animation_end()
         ):
             player.transition_to("hit")
+            player.take_damage(0.1)

@@ -56,6 +56,12 @@ class Player(PhysicsEntity):
         self.healthbar = ProgressBarUI(fill_color="lime")  # type: ignore
         self.manabar = ProgressBarUI(fill_color="skyblue", margin_y=int(self.healthbar.fullsize[1] * 1.4))  # type: ignore
 
+        self.stats: Dict[str, float] = {"health": 1.0, "attack_damage": 0.1}
+
+    def take_damage(self, damage: float):
+        self.stats["health"] -= damage
+        self.healthbar.set_progress(self.stats["health"])
+
     def set_attack_size(self, offsets: TAttackSizes):
         self.attack_sizes = offsets
 
