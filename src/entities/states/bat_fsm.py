@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 from constants import BASE_SPEED
 from entities.player import Player
 from entities.states.base_fsm import State

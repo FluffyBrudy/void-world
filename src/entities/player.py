@@ -65,7 +65,7 @@ class Player(PhysicsEntity):
         return pygame.Rect(offset_x, hbox.top, attack_w, attack_h)
 
     def input(self):
-        if self.is_dashing:
+        if self.is_dashing or self.get_state() == "hit":
             return
 
         keys = pygame.key.get_pressed()

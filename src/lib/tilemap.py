@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Sequence, Set, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, Sequence, Set, Tuple, TypedDict, cast
 from pygame import Rect, Surface, Vector2
 import pygame
 from pygame.typing import IntPoint
@@ -20,13 +20,19 @@ if TYPE_CHECKING:
 AVOIDABLE_TILESETS = ("marker",)
 
 
+class TileProps(TypedDict, total=True):
+    inflate: Rect
+
+
 class Tilemap:
     game: "Game" = None  # type: ignore
 
     def __init__(self, **kwargs) -> None:
+        self.tile_props: Dict[int, TileProps] = {}
+
         self.tile_scale = kwargs.get("tile_scale", 1)
         self.grid_tiles: Dict[Tuple[int, int], "Tile"] = {}
-        self.grid_nocollision_tiles: Dict[Tuple[int, int], "Tile"] = {}
+        self.grid_optional_collision_tiles: Dict[Tuple[int, int], "Tile"] = {}
 
         self.tile_cache: Dict[int, Surface] = {}
         self.object_cache: Dict[int, Surface] = {}
@@ -34,25 +40,22 @@ class Tilemap:
         self.load_map(getattr(self.game, "level", 0))
 
     def physics_tiles_around(self, grid_pos: Tuple[int, int]) -> List[Tuple[int, int]]:
-        tiles: List = []
+        tiles: List[Tuple[int, int]] = []
         gx, gy = grid_pos
 
         for nx, ny in GRID_NEIGHBOURS_9:
             new_x, new_y = gx + nx, gy + ny
             tile_loc = (new_x, new_y)
-            if (
-                tile_loc
-                in self.grid_tiles
-                # and tile_loc not in self.grid_nocollision_tiles
-            ):
+            if tile_loc in self.grid_tiles:
                 tiles.append(tile_loc)
 
         return tiles
 
     def physics_rect_around(
-        self, pos: Tuple[float | int, float | int] | IntPoint | Sequence[int] | Vector2
+        self,
+        pos: Tuple[float | int, float | int] | IntPoint | Sequence[int] | Vector2,
     ) -> List[Rect]:
-        rects = []
+        rects: List[Rect] = []
 
         tw, th = self.tilewidth, self.tileheight
         grid_x = int(pos[0] // self.tilewidth)
@@ -61,6 +64,7 @@ class Tilemap:
         for tile_x, tile_y in self.physics_tiles_around((grid_x, grid_y)):
             rect = pygame.Rect(tile_x * tw, tile_y * th, tw, th)
             rects.append(rect)
+
         return rects
 
     def is_solid_tile(self, pos: IntPoint):
@@ -93,7 +97,10 @@ class Tilemap:
             tile = Tile(gid, (x * self.tilewidth, y * self.tileheight))
             props = map_data.get_tile_properties_by_gid(gid)
             if props is not None and props.get("no_collision"):
-                self.grid_nocollision_tiles[(x, y)] = tile
+                if gid not in self.tile_props:
+                    cached_surf = self.tile_cache[gid]
+                    self.tile_props[gid] = {"inflate": cached_surf.get_bounding_rect()}
+                self.grid_optional_collision_tiles[(x, y)] = tile
             else:
                 self.grid_tiles[(x, y)] = tile
 
@@ -117,8 +124,8 @@ class Tilemap:
                     pos = tile.pos - scroll
                     surf = self.tile_cache[tile.tile_id]
                     surface.blit(surf, pos)
-                if location in self.grid_nocollision_tiles:
-                    tile = self.grid_nocollision_tiles[location]
+                if location in self.grid_optional_collision_tiles:
+                    tile = self.grid_optional_collision_tiles[location]
                     pos = tile.pos - scroll
                     surf = self.tile_cache[tile.tile_id]
                     surface.blit(surf, pos)

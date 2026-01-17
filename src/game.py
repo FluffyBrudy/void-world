@@ -3,16 +3,16 @@ import pygame
 from collision.collision_resolution import player_bat_collision
 from constants import ASSETS_PATH, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from entities.enemy_entity import Bat, Mushroom
-from entities.physics_entity import PhysicsEntity
+from entities.physics_entity import BaseEntity
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug, pgdebug
 from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation, PostAnimatableAnimation
-from widgets.healthbar import SimpleHealthbarUI
+from widgets.healthbar import ProgressBarUI
 
-TILEMAP_SCALE = 10
+TILEMAP_SCALE = 5
 PLAYER_SCALE = TILEMAP_SCALE / 2.5
 
 
@@ -24,7 +24,7 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-        interface_classes = (PhysicsEntity, Tilemap, ParallaxBg)
+        interface_classes = (BaseEntity, Tilemap, ParallaxBg)
         for interface in interface_classes:
             interface.game = self
 
@@ -215,13 +215,8 @@ class Game:
         mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size)
         bat.set_target(self.player)
         mushroom.set_target(self.player)
-        Mushroom.add(mushroom)
-        Mushroom.add_to_group(mushroom)
-        Bat.add(bat)
-        Bat.add_to_group(bat)
 
-        self.healthbar = SimpleHealthbarUI(margin_x=100)
-        self.healthbar.target_ratio = 0.9
+        self.healthbar = ProgressBarUI(margin_x=100)  # type: ignore
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -256,7 +251,7 @@ class Game:
 
     def handle_collision(self):
         player = self.player
-        for bat in Bat.get_instances():
+        for bat in Bat.get_by_group():
             player_bat_collision(player, bat)
 
     def update(self):
@@ -272,7 +267,7 @@ class Game:
         self.screen.fill((50, 50, 100))
         self.parallaxbg.render()
         self.player.render(self.screen)
-        PhysicsEntity.render_all(self.dt)
+        BaseEntity.render_all(self.dt)
         self.tilemap.render()
         Debug.draw_all(self.screen)
         self.healthbar.update()

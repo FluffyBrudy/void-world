@@ -5,12 +5,15 @@ from typing import (
     Literal,
     Set,
     Tuple,
+    Type,
+    TypeVar,
+    cast,
 )
 import pygame
 
 from constants import BASE_SPEED, GRAVITY
 from .states.player_fsm import State
-from pydebug import pgdebug_rect
+
 
 if TYPE_CHECKING:
     from game import Game
@@ -19,14 +22,30 @@ if TYPE_CHECKING:
 T4Directions = Literal["up", "down", "left", "right"]
 TContactSides = Dict[T4Directions, bool]
 
+TEntity = TypeVar("TEntity", bound="BaseEntity")
+
+
+AUTO_ADD_AVOIDABLES = ("player",)
+
 
 class BaseEntity(ABC):
+    game: "Game" = None  # type: ignore
+    __instances: Set["BaseEntity"] = set()
+    __registry: Dict[Type["BaseEntity"], Set["BaseEntity"]] = {}
+
     etype: str
     pos: pygame.Vector2
     size: Tuple[int, int]
-    velocity: pygame.Vector2
-    contact_sides: TContactSides
     flipped: bool
+
+    def __init__(self, etype: str, pos: Tuple[int, int], size: Tuple[int, int]):
+        if etype not in AUTO_ADD_AVOIDABLES:
+            BaseEntity.add_to_group(self)
+
+        self.etype = etype
+        self.pos = pygame.Vector2(pos)
+        self.size = size
+        self.flipped = False
 
     @abstractmethod
     def hitbox(self) -> pygame.Rect:
@@ -60,10 +79,44 @@ class BaseEntity(ABC):
     def render(self, surface: pygame.Surface):
         ...
 
+    @classmethod
+    def add(cls: Type[TEntity], instance: TEntity):
+        """maybe shouldnt use this externally, just for convinience its here"""
+        cls.__instances.add(instance)
+
+    @classmethod
+    def add_to_group(cls: Type[TEntity], entity: TEntity):
+        """maybe shouldnt use this externally, just for convinience its here"""
+        registry_key = type(entity)
+
+        if registry_key not in BaseEntity.__registry:
+            BaseEntity.__registry[registry_key] = set()
+        BaseEntity.__registry[registry_key].add(entity)
+        BaseEntity.__instances.add(entity)
+
+    @classmethod
+    def get_by_group(cls: Type[TEntity]) -> Set[TEntity]:
+        return cast(Set[TEntity], BaseEntity.__registry.get(cls, set()))
+
+    @classmethod
+    def remove(cls: Type[TEntity], instance: TEntity):
+        cls.__instances.remove(instance)
+
+    @classmethod
+    def render_all(cls, dt: float):
+        surface = cls.game.screen
+        for bat in cls.__instances:
+            bat.update(dt)
+            bat.render(surface)
+
+
+TEntity = TypeVar("TEntity", bound="BaseEntity")
+
 
 class PhysicsEntity(BaseEntity):
-    game: "Game" = None  # type: ignore
-    __instances: Set["PhysicsEntity"] = set()
+    velocity: pygame.Vector2
+    contact_sides: TContactSides
+    obey_gravity: bool
 
     def __init__(
         self,
@@ -73,7 +126,7 @@ class PhysicsEntity(BaseEntity):
         states: Dict[str, State],
         offset: Tuple[int, int] = (0, 0),
     ):
-        super().__init__()
+        super().__init__(etype, pos, size)
 
         self.states = states
 
@@ -82,8 +135,6 @@ class PhysicsEntity(BaseEntity):
         self.current_state: State = self.states[default_state]
 
         self.animation = self.game.assets[etype + "/" + default_state]
-
-        self.etype = etype
 
         self.velocity = pygame.Vector2()
 
@@ -101,23 +152,6 @@ class PhysicsEntity(BaseEntity):
         self.animation = self.game.assets[etype + "/" + self.current_state.name]
 
         self.offset = offset
-        self.pos = pygame.Vector2(pos)
-        self.size = size
-
-    @classmethod
-    def add(cls, instance: "PhysicsEntity"):
-        cls.__instances.add(instance)
-
-    @classmethod
-    def remove(cls, instance: "PhysicsEntity"):
-        cls.__instances.remove(instance)
-
-    @classmethod
-    def render_all(cls, dt: float):
-        surface = cls.game.screen
-        for bat in cls.__instances:
-            bat.update(dt)
-            bat.render(surface)
 
     def rect(self):
         return pygame.Rect(self.pos, self.animation.get_frame().size)
@@ -162,7 +196,7 @@ class PhysicsEntity(BaseEntity):
                 break
 
     def __resolve_horizontal_collision(
-        self, hitbox: pygame.Rect, tile_rect: pygame.Rect, /
+        self, hitbox: pygame.Rect, tile_rect: pygame.Rect
     ):
         if self.velocity.x < 0:
             self.pos.x += tile_rect.right - hitbox.left
@@ -171,20 +205,20 @@ class PhysicsEntity(BaseEntity):
         self.velocity.x = 0
 
     def collision_vertical(self):
-        tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
+        tiles = self.game.tilemap.physics_rect_around(self.pos)
         hitbox = self.hitbox()
-        delta = 0
 
-        for tile_rect in tiles_rect_around:
-            if tile_rect.colliderect(hitbox):
-                if self.velocity.y < 0:
-                    delta = tile_rect.bottom - hitbox.top
-                    self.velocity.y = 0
-                elif self.velocity.y > 0:
-                    delta = tile_rect.top - hitbox.bottom
-                    self.velocity.y = 0
-                self.pos[1] += delta
+        for tile in tiles:
+            if tile.colliderect(hitbox):
+                self.__resolve_vertical_collision(hitbox, tile)
                 break
+
+    def __resolve_vertical_collision(self, hitbox: pygame.Rect, tile_rect: pygame.Rect):
+        if self.velocity.y < 0:
+            self.pos.y += tile_rect.bottom - hitbox.top
+        elif self.velocity.y > 0:
+            self.pos.y += tile_rect.top - hitbox.bottom
+        self.velocity.y = 0
 
     def identify_contact_sides(self):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)

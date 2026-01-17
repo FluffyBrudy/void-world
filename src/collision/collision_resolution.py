@@ -14,5 +14,8 @@ def player_bat_collision(player: "Player", bat: "Bat"):
     if bat.get_state() == "chase":
         if player.is_attacking and player.attack_hitbox().colliderect(bat.hitbox()):
             bat.transition_to("hit")
-    elif bat.get_state() == "attack":
-        player.transition_to("hit")
+    elif not player.is_dashing:
+        if bat.get_state() == "attack" and player.attack_hitbox().colliderect(
+            bat.hitbox()
+        ):
+            player.transition_to("hit")

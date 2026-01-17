@@ -9,7 +9,7 @@ class ImageLoadOptions(TypedDict, total=False):
     colorkey: Optional[ColorLike]
 
 
-class BoxModel(TypedDict, total=False):
+class BoxModel(TypedDict, total=True):
     margin_x: int
     margin_y: int
     padding_x: int
@@ -19,7 +19,7 @@ class BoxModel(TypedDict, total=False):
     border_width: int
 
 
-class BoxModelResult(TypedDict):
+class BoxModelResult(TypedDict, total=True):
     left: int
     top: int
     offset_x: int
@@ -30,7 +30,7 @@ class BoxModelResult(TypedDict):
     content_height: int
 
 
-class UIOptions(BoxModel, TypedDict, total=False):
+class UIOptions(BoxModel, total=False):
     border_radius: int
     border_color: ColorLike
     background: ColorLike
