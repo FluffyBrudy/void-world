@@ -10,7 +10,6 @@ from lib.tilemap import Tilemap
 from pydebug import Debug, pgdebug
 from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation, PostAnimatableAnimation
-from widgets.healthbar import ProgressBarUI
 
 TILEMAP_SCALE = 5
 PLAYER_SCALE = TILEMAP_SCALE / 2.5
@@ -216,8 +215,6 @@ class Game:
         bat.set_target(self.player)
         mushroom.set_target(self.player)
 
-        self.healthbar = ProgressBarUI(margin_x=100)  # type: ignore
-
     def handle_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -270,8 +267,6 @@ class Game:
         BaseEntity.render_all(self.dt)
         self.tilemap.render()
         Debug.draw_all(self.screen)
-        self.healthbar.update()
-        self.healthbar.render(self.screen)
         pygame.display.flip()
 
 
