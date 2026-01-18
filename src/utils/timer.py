@@ -2,7 +2,7 @@ from typing import Union
 
 import pygame
 
-from pydebug import pgdebug
+from logger import logger
 
 
 class Timer:
@@ -20,14 +20,12 @@ class Timer:
     def reset_to_now(self):
         self.start_timer = pygame.time.get_ticks()
 
-    def has_reach_interval(self):
+    def has_reached_interval(self):
         return (pygame.time.get_ticks() - self.start_timer) >= self.interval
 
     def has_reached(self, interval_ratio: float):
         if 0 >= interval_ratio >= 1.0:
-            print(
-                "[WARNING]: interval_ratio must be withing inclusive range of 0 and 1.0"
-            )
+            logger.warning("interval_ratio must be within inclusive range of 0 and 1.0")
             return None
         return (pygame.time.get_ticks() - self.start_timer) >= int(
             self.interval * interval_ratio

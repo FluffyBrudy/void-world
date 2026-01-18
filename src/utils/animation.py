@@ -126,7 +126,7 @@ class TimerAnimation:
         return self.frames[self._current_index]
 
     def update(self):
-        if self._timer.has_reach_interval():
+        if self._timer.has_reached_interval():
             self._current_index += 1
             self._timer.reset_to_now()
 

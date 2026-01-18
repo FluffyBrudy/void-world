@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from pydebug import pgdebug
+
 
 if TYPE_CHECKING:
     from entities.player import Player
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 def player_bat_collision(player: "Player", bat: "Bat", /):
     state = bat.get_state()
 
-    if state == "hit" or not player.hit_timer.has_reach_interval():
+    if state == "hit" or not player.hit_timer.has_reached_interval():
         return
 
     if state not in {"chase", "attack"}:
@@ -30,7 +30,7 @@ def player_bat_collision(player: "Player", bat: "Bat", /):
 def player_mushroom_collision(player: "Player", mushroom: "Mushroom", /):
     state = mushroom.get_state()
 
-    if state == "hit" or not player.hit_timer.has_reach_interval():
+    if state == "hit" or not player.hit_timer.has_reached_interval():
         return
 
     if state not in {"run", "attack"}:

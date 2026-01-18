@@ -19,7 +19,6 @@ from entities.states.player_fsm import (
     HitState,
 )
 from entities.physics_entity import PhysicsEntity
-from pydebug import pgdebug, pgdebug_rect
 from utils.timer import Timer
 from widgets.components.progressbar import ProgressBarUI
 
@@ -89,13 +88,13 @@ class Player(PhysicsEntity):
             if not self.flipped:
                 self.flipped = True
                 self.transition_to("idleturn")
-            if self.movement_start_timer.has_reach_interval():
+            if self.movement_start_timer.has_reached_interval():
                 input_vector.x -= 2
         elif keys[pygame.K_RIGHT]:
             if self.flipped:
                 self.flipped = False
                 self.transition_to("idleturn")
-            if self.movement_start_timer.has_reach_interval():
+            if self.movement_start_timer.has_reached_interval():
                 input_vector.x += 2
         else:
             self.movement_start_timer.reset_to_now()
@@ -132,7 +131,7 @@ class Player(PhysicsEntity):
     def attack(self):
         if self.get_state() == "hit":
             return
-        if not self.is_attacking and self.attack_timer.has_reach_interval():
+        if not self.is_attacking and self.attack_timer.has_reached_interval():
             self.transition_to("attack")
             self.is_attacking = True
 
@@ -140,7 +139,7 @@ class Player(PhysicsEntity):
         if (
             not self.current_state.name == "wallslide"
             and not self.is_dashing
-            and self.dash_timer.has_reach_interval()
+            and self.dash_timer.has_reached_interval()
         ):
             self.is_dashing = True
             self.dash_timer.reset_to_now()
@@ -191,13 +190,8 @@ class Player(PhysicsEntity):
             self.attack_timer.reset_to_now()
         self.manage_dash()
         super().manage_state()
-        pgdebug(self.current_state)
 
     def render(self, surface: pygame.Surface):
-        if self.current_state.name == "attack":
-            hbox = self.attack_hitbox()
-            pos = hbox.topleft - self.game.scroll
-            pgdebug_rect(self.game.screen, (pos, hbox.size))
         if not self.is_dashing:
             super().render(surface)
         else:

@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Unpack, cast
 import pygame
 from pygame import Surface
 
-from pydebug import pgdebug
 from ttypes.index_type import UIOptions
 
 from utils.interpolation import SimpleInterpolation
@@ -37,7 +36,6 @@ class ProgressBarUI(UIBase):
 
     def __init__(self, **overrides: Unpack[UIOptions]) -> None:
         options: UIOptions = {**PROGRESSBAR_DEFAULTS, **overrides}
-        print(options)
         super().__init__(options)
         self.colors["fill"] = options.get("fill_color", (255, 255, 255, 255))
 

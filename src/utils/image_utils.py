@@ -4,12 +4,13 @@ import pygame
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple, TypedDict, Union, Unpack
 
+from logger import logger
 from ttypes.index_type import ImageLoadOptions
 
 
 def load_image(path: Path, /, **options: Unpack[ImageLoadOptions]) -> pygame.Surface:
     if not path.exists():
-        print(f"[WARNING]: {path} not found")
+        logger.warning(f"{path} not found")
         sys.exit(1)
 
     image = pygame.image.load(path).convert_alpha()
@@ -20,15 +21,15 @@ def load_spritesheet(
     path: Path, frame_size: Tuple[int, int], /, **options: Unpack[ImageLoadOptions]
 ):
     if not path.exists():
-        print(f"[WARNING]: {path} not found")
+        logger.warning(f"{path} not found")
         sys.exit(1)
 
     spritesheet = pygame.image.load(path).convert_alpha()
     if (spritesheet.width % frame_size[0]) != 0:
-        print(f"[WARNING]: width isn't symmetric")
+        logger.warning("width isn't symmetric")
         sys.exit(1)
     if (spritesheet.height % frame_size[1]) != 0:
-        print(f"[WARNING]: height isn't symmetric")
+        logger.warning("height isn't symmetric")
         sys.exit(1)
 
     row_len = spritesheet.height // frame_size[1]
@@ -54,7 +55,7 @@ def load_images(
     **options: Unpack[ImageLoadOptions],
 ):
     if not dir_path.exists():
-        print(f"[WARNING]: directory {dir_path} not found")
+        logger.warning(f"directory {dir_path} not found")
         sys.exit(1)
 
     sorted_paths = sorted(
@@ -72,7 +73,7 @@ def load_key_images(
     **options: Unpack[ImageLoadOptions],
 ):
     if not dir_path.exists():
-        print(f"[WARNING]: directory {dir_path} not found")
+        logger.warning(f"directory {dir_path} not found")
         sys.exit(1)
 
     sorted_paths = sorted(
@@ -119,7 +120,7 @@ def apply_image_options(
         elif isinstance(scale, tuple) and len(scale) == 2:
             image = pygame.transform.scale(image, scale)
         else:
-            print("[WARNING]: invalid scale_ratio_or_size")
+            logger.warning("invalid scale_ratio_or_size")
             sys.exit(1)
 
     return image

@@ -19,7 +19,7 @@ class FlyState(State["Bat"]):
         if entity.target is None:
             return
 
-        if not entity.attack_timer.has_reach_interval():
+        if not entity.attack_timer.has_reached_interval():
             entity.velocity *= 0
             return
 
@@ -48,7 +48,7 @@ class ChaseState(State["Bat"]):
         if entity.target is None:
             return None
 
-        if not entity.attack_timer.has_reach_interval():
+        if not entity.attack_timer.has_reached_interval():
             entity.velocity *= 0
             return
 
@@ -74,7 +74,7 @@ class ChaseState(State["Bat"]):
             return "fly"
         if (
             distance <= entity.attack_radius
-            and entity.attack_timer.has_reach_interval()
+            and entity.attack_timer.has_reached_interval()
         ):
             return "attack"
 
@@ -127,6 +127,6 @@ class HitState(State["Bat"]):
         entity.velocity *= 0
 
     def can_transition(self, entity: "Bat"):
-        if entity.hit_timer.has_reach_interval():
+        if entity.hit_timer.has_reached_interval():
             return "fly"
         return None

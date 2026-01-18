@@ -16,7 +16,7 @@ from entities.base_entity import BaseEntity
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
-from pydebug import Debug, pgdebug
+from pydebug import Debug
 from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation, PostAnimatableAnimation
 
@@ -257,7 +257,6 @@ class Game:
 
         self.scroll.x += (target_scroll_x - scroll_x) * 0.1
         self.scroll.y += (target_scroll_y - scroll_y) * 0.05
-        pgdebug(self.scroll)
 
     def handle_collision(self):
         player = self.player
@@ -273,7 +272,6 @@ class Game:
         self.deadzone_camera()
         self.handle_collision()
         self.player.update(dt)
-        pgdebug(f"player={self.player.hit_timer.has_reach_interval()}", 0)
 
     def render_all(self):
         self.screen.fill((50, 50, 100))

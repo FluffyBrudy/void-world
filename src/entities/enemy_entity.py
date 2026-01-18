@@ -10,7 +10,6 @@ from entities.physics_entity import PhysicsEntity
 from entities.states.base_fsm import State
 from entities.states import bat_fsm as bat_fsm
 from entities.states import mushroom_fsm as mus_fsm
-from pydebug import pgdebug
 from utils.timer import Timer
 
 TEntity = TypeVar("TEntity", bound="BaseEntity")
@@ -36,7 +35,7 @@ class Enemy(Generic[TEntity], ABC):
 
     def is_target_vulnarable(self):
         hit_timer = cast(Optional[Timer], getattr(self.target, "hit_timer"))
-        return hit_timer is not None and not hit_timer.has_reach_interval()
+        return hit_timer is not None and not hit_timer.has_reached_interval()
 
     @abstractmethod
     def can_chase(self, entity: "BaseEntity") -> bool:
@@ -115,5 +114,4 @@ class Mushroom(GroundEntity, Enemy["Mushroom"]):
         return self.rect().colliderect(entity.hitbox())
 
     def update(self, dt: float):
-        pgdebug(f"state={self.get_state()}")
         return super().update(dt)

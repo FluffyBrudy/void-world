@@ -50,7 +50,7 @@ class RunState(State["Mushroom"]):
 
         if (
             entity.can_attack(entity.target)
-            and entity.attack_timer.has_reach_interval()
+            and entity.attack_timer.has_reached_interval()
         ):
             return "attack"
 
