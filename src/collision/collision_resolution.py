@@ -41,7 +41,7 @@ def player_mushroom_collision(player: "Player", mushroom: "Mushroom", /):
         elif (
             state == "attack"
             and not player.is_dashing
-            and mushroom.animation.has_animation_end()
+            and mushroom.animation.frame_index >= mushroom.animation.frames_len // 2
         ):
             player.transition_to("hit")
             player.take_damage(0.1)

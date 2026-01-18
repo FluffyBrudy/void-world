@@ -224,7 +224,9 @@ class Game:
         self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
 
         bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
-        mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size)
+        mushroom = Mushroom(
+            (1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20)
+        )
         bat.set_target(self.player)
         mushroom.set_target(self.player)
 
