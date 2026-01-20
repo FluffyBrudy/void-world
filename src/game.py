@@ -11,6 +11,8 @@ from constants import (
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
 )
+from effects.particle_manager import ParticleManager
+from effects.particles import DotParticle
 from entities.enemy_entity import Bat, Mushroom
 from entities.base_entity import BaseEntity
 from entities.player import Player
@@ -32,7 +34,7 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-        interface_classes = (BaseEntity, Tilemap, ParallaxBg)
+        interface_classes = (BaseEntity, Tilemap, ParallaxBg, ParticleManager)
         for interface in interface_classes:
             interface.game = self
 
@@ -223,6 +225,8 @@ class Game:
 
         self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
 
+        self.particle_manager = ParticleManager()
+
         bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
         mushroom = Mushroom(
             (1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20)
@@ -282,6 +286,7 @@ class Game:
         BaseEntity.render_all(self.dt)
         self.tilemap.render()
         Debug.draw_all(self.screen)
+        self.particle_manager.render(self.screen, self.dt)
         pygame.display.flip()
 
 

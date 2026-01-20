@@ -1,6 +1,6 @@
+from math import pi
 from typing import Dict, Tuple, override
 import pygame
-from random import random
 from constants import (
     BASE_SPEED,
     GRAVITY,
@@ -8,6 +8,7 @@ from constants import (
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,
 )
+from effects.particles import coned_particles
 from entities.states.player_fsm import (
     AttackState,
     FallState,
@@ -169,6 +170,10 @@ class Player(PhysicsEntity):
             self.velocity.x = (
                 0  # because if x-comonent of velocity is not resett it keeps dashing
             )
+        pm = self.game.particle_manager
+        hitbox = self.hitbox()
+        pos = hitbox.midright if self.flipped else hitbox.midleft
+        coned_particles(pos, (pi / 2, 0, -pi / 2), pm)
 
     @override
     def update(self, dt: float):
@@ -193,11 +198,8 @@ class Player(PhysicsEntity):
 
     def render(self, surface: pygame.Surface):
         if not self.is_dashing:
-            super().render(surface)
-        else:
             frame, pos = self.get_renderable()
             frame_copy = frame.copy()
-            frame_copy.set_alpha(int(random() * 100))
             surface.blit(frame_copy, pos)
 
         self.healthbar.render(surface)

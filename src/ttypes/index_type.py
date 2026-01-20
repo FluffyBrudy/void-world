@@ -1,5 +1,6 @@
-from typing import Optional, Tuple, TypedDict
-from pygame.typing import ColorLike, Point, RectLike
+from typing import TYPE_CHECKING, Optional, Tuple, Type, TypedDict
+from pygame.typing import ColorLike, RectLike
+from pygame import Vector2
 
 
 class ImageLoadOptions(TypedDict, total=False):
@@ -35,3 +36,6 @@ class UIOptions(BoxModel, total=False):
     border_color: ColorLike
     background: ColorLike
     fill_color: ColorLike
+
+
+TPosType = Tuple[int, int] | Vector2
