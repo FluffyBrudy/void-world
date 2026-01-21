@@ -1,6 +1,9 @@
+from math import pi
+from random import uniform
 from typing import Dict, Tuple, override
+
 import pygame
-from random import random
+
 from constants import (
     BASE_SPEED,
     GRAVITY,
@@ -8,21 +11,25 @@ from constants import (
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,
 )
+from effects.particles import coned_particles
+from entities.physics_entity import PhysicsEntity
 from entities.states.player_fsm import (
     AttackState,
     FallState,
+    HitState,
     IdleState,
     IdleTurnState,
     JumpState,
     RunState,
     SlideState,
-    HitState,
 )
-from entities.physics_entity import PhysicsEntity
 from utils.timer import Timer
 from widgets.components.progressbar import ProgressBarUI
 
 TAttackSizes = Dict[str, Tuple[int, int]]
+
+PARTICLE_DIR_LEFT = (-pi / 12, pi / 12)
+PARTICLE_DIR_RIGHT = (pi - (pi / 12), pi - (-pi / 12))
 
 
 class Player(PhysicsEntity):
@@ -117,10 +124,7 @@ class Player(PhysicsEntity):
             pos_x = hitbox.left - self.game.tilemap.tilewidth
         return (
             self.velocity.y > 0
-            and (
-                (self.contact_sides["left"] and self.flipped)
-                or (self.contact_sides["right"] and not self.flipped)
-            )
+            and ((self.contact_sides["left"] and self.flipped) or (self.contact_sides["right"] and not self.flipped))
             and not self.contact_sides["down"]
             and self.game.tilemap.is_solid_tile((pos_x, hitbox.bottom))
         )
@@ -162,13 +166,21 @@ class Player(PhysicsEntity):
         self.velocity.y = 0  # otherwise it will have trajectory path
 
         if self.dash_timer.has_reached(0.15) or (
-            (self.contact_sides["left"] and self.flipped)
-            or (self.contact_sides["right"] and not self.flipped)
+            (self.contact_sides["left"] and self.flipped) or (self.contact_sides["right"] and not self.flipped)
         ):
             self.is_dashing = False
-            self.velocity.x = (
-                0  # because if x-comonent of velocity is not resett it keeps dashing
-            )
+            self.velocity.x = 0  # because if x-comonent of velocity is not resett it keeps dashing
+        pm = self.game.particle_manager
+        pos = self.hitbox().center
+        coned_particles(
+            pos,
+            tuple(uniform(*PARTICLE_DIR_LEFT) for _ in range(5))
+            if self.flipped
+            else tuple(uniform(*PARTICLE_DIR_RIGHT) for _ in range(5)),
+            pm,
+            color=(0, 255, 255),
+            filled=True,
+        )
 
     @override
     def update(self, dt: float):
@@ -176,9 +188,7 @@ class Player(PhysicsEntity):
         if self.is_attacking:
             self.velocity.x = 0
         if self.can_slide():
-            self.velocity.y = min(
-                self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT
-            )
+            self.velocity.y = min(self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT)
         self.healthbar.update()
         self.manabar.update()
         super().update(dt)
@@ -193,11 +203,8 @@ class Player(PhysicsEntity):
 
     def render(self, surface: pygame.Surface):
         if not self.is_dashing:
-            super().render(surface)
-        else:
             frame, pos = self.get_renderable()
             frame_copy = frame.copy()
-            frame_copy.set_alpha(int(random() * 100))
             surface.blit(frame_copy, pos)
 
         self.healthbar.render(surface)

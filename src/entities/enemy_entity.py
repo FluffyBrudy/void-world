@@ -6,10 +6,9 @@ from pygame import Vector2
 from entities.air_entity import AirEntity
 from entities.base_entity import BaseEntity
 from entities.ground_entity import GroundEntity
-from entities.physics_entity import PhysicsEntity
-from entities.states.base_fsm import State
 from entities.states import bat_fsm as bat_fsm
 from entities.states import mushroom_fsm as mus_fsm
+from entities.states.base_fsm import State
 from utils.timer import Timer
 
 TEntity = TypeVar("TEntity", bound="BaseEntity")
@@ -38,12 +37,10 @@ class Enemy(Generic[TEntity], ABC):
         return hit_timer is not None and not hit_timer.has_reached_interval()
 
     @abstractmethod
-    def can_chase(self, entity: "BaseEntity") -> bool:
-        ...
+    def can_chase(self, entity: "BaseEntity") -> bool: ...
 
     @abstractmethod
-    def can_attack(self, entity: "BaseEntity") -> bool:
-        ...
+    def can_attack(self, entity: "BaseEntity") -> bool: ...
 
 
 class Bat(AirEntity, Enemy["Bat"]):

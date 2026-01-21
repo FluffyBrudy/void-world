@@ -1,5 +1,7 @@
 from typing import Dict
+
 import pygame
+
 from collision.collision_resolution import (
     player_bat_collision,
     player_mushroom_collision,
@@ -11,14 +13,15 @@ from constants import (
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
 )
-from entities.enemy_entity import Bat, Mushroom
+from effects.particle_manager import ParticleManager
 from entities.base_entity import BaseEntity
+from entities.enemy_entity import Bat, Mushroom
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug
-from utils.image_utils import load_images, load_spritesheet
 from utils.animation import Animation, PostAnimatableAnimation
+from utils.image_utils import load_images, load_spritesheet
 
 TILEMAP_SCALE = 5
 PLAYER_SCALE = TILEMAP_SCALE / 2.5
@@ -32,7 +35,7 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-        interface_classes = (BaseEntity, Tilemap, ParallaxBg)
+        interface_classes = (BaseEntity, Tilemap, ParallaxBg, ParticleManager)
         for interface in interface_classes:
             interface.game = self
 
@@ -223,10 +226,10 @@ class Game:
 
         self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
 
+        self.particle_manager = ParticleManager()
+
         bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
-        mushroom = Mushroom(
-            (1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20)
-        )
+        mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20))
         bat.set_target(self.player)
         mushroom.set_target(self.player)
 
@@ -282,6 +285,7 @@ class Game:
         BaseEntity.render_all(self.dt)
         self.tilemap.render()
         Debug.draw_all(self.screen)
+        self.particle_manager.render(self.screen, self.dt)
         pygame.display.flip()
 
 
