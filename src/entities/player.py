@@ -53,11 +53,11 @@ class Player(PhysicsEntity):
         self.movement_start_timer = Timer(200)
 
         self.is_attacking = False
-        self.attack_timer = Timer(300)
+        self.attack_timer = Timer(300, True)
 
         self.is_dashing = False
-        self.dash_timer = Timer(2000)
-        self.hit_timer = Timer(2000)
+        self.dash_timer = Timer(2000, True)
+        self.hit_timer = Timer(2000, True)
 
         self.healthbar = ProgressBarUI(fill_color="lime")  # type: ignore
         self.manabar = ProgressBarUI(fill_color="skyblue", margin_y=int(self.healthbar.fullsize[1] * 1.4))  # type: ignore

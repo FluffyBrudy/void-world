@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
-    from entities.player import Player
     from entities.enemy_entity import Bat, Mushroom
+    from entities.player import Player
 
 
 def player_bat_collision(player: "Player", bat: "Bat", /):
@@ -18,11 +17,7 @@ def player_bat_collision(player: "Player", bat: "Bat", /):
     if player.attack_hitbox().colliderect(bat.hitbox()):
         if state == "chase" and player.is_attacking:
             bat.transition_to("hit")
-        elif (
-            state == "attack"
-            and not player.is_dashing
-            and bat.animation.frame_index >= bat.animation.frames_len // 2
-        ):
+        elif state == "attack" and not player.is_dashing and bat.animation.frame_index >= bat.animation.frames_len // 2:
             player.transition_to("hit")
             player.take_damage(0.1)
 

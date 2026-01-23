@@ -13,8 +13,10 @@ class Timer:
 
     __slots__ = ("interval", "start_timer")
 
-    def __init__(self, interval: Union[float, int]) -> None:
-        self.start_timer = pygame.time.get_ticks() - (interval - 1)
+    def __init__(self, interval: Union[float, int], stale_init=False) -> None:
+        self.start_timer = pygame.time.get_ticks()
+        if stale_init:
+            self.start_timer -= interval - 1
         self.interval = interval
 
     def reset_to_now(self):
@@ -27,9 +29,7 @@ class Timer:
         if 0 >= interval_ratio >= 1.0:
             logger.warning("interval_ratio must be within inclusive range of 0 and 1.0")
             return None
-        return (pygame.time.get_ticks() - self.start_timer) >= int(
-            self.interval * interval_ratio
-        )
+        return (pygame.time.get_ticks() - self.start_timer) >= int(self.interval * interval_ratio)
 
     def stale(self):
         if self.interval > 0:

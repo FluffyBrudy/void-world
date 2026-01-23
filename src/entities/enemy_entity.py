@@ -42,6 +42,9 @@ class Enemy(Generic[TEntity], ABC):
     @abstractmethod
     def can_attack(self, entity: "BaseEntity") -> bool: ...
 
+    @abstractmethod
+    def take_damage(self, entity: "BaseEntity") -> Optional[bool]: ...
+
 
 class Bat(AirEntity, Enemy["Bat"]):
     def __init__(
