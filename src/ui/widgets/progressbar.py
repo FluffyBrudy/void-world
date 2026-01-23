@@ -3,15 +3,9 @@ from typing import TYPE_CHECKING, Unpack, cast
 import pygame
 from pygame import Surface
 
-from ttypes.index_type import UIOptions
-
+from ttypes.index_type import TPosType, UIOptions
+from ui.base.uibase import UIBase
 from utils.interpolation import SimpleInterpolation
-from widgets.components.uibase import UIBase
-
-
-if TYPE_CHECKING:
-    from game import Game
-
 
 PROGRESSBAR_DEFAULTS = cast(
     UIOptions,
@@ -32,8 +26,6 @@ PROGRESSBAR_DEFAULTS = cast(
 
 
 class ProgressBarUI(UIBase):
-    game: "Game" = None  # type: ignore
-
     def __init__(self, **overrides: Unpack[UIOptions]) -> None:
         options: UIOptions = {**PROGRESSBAR_DEFAULTS, **overrides}
         super().__init__(options)
@@ -45,12 +37,12 @@ class ProgressBarUI(UIBase):
         self.interpolation.set(value)
 
     def get_progress(self):
-        return self.interpolation.current * self.box_model["content_width"]
+        return self.interpolation.current
 
     def update(self):
         self.interpolation.update()
 
-    def render(self, screen: Surface, pos_offset=(0, 0)):
+    def render(self, screen: Surface, pos_offset: TPosType = (0, 0)):
         self.draw_base()
 
         intrp_current = self.interpolation.current

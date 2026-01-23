@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, Optional, Tuple, Type, TypedDict
+from typing import Optional, Protocol, Tuple, TypedDict
+
+from pygame import Rect, Vector2
 from pygame.typing import ColorLike, RectLike
-from pygame import Vector2
 
 
 class ImageLoadOptions(TypedDict, total=False):
@@ -10,7 +11,7 @@ class ImageLoadOptions(TypedDict, total=False):
     colorkey: Optional[ColorLike]
 
 
-class BoxModel(TypedDict, total=True):
+class BoxModel(TypedDict, total=False):
     margin_x: int
     margin_y: int
     padding_x: int
@@ -36,6 +37,14 @@ class UIOptions(BoxModel, total=False):
     border_color: ColorLike
     background: ColorLike
     fill_color: ColorLike
+
+
+class HasHitbox(Protocol):
+    def hitbox(self) -> Rect: ...
+
+
+class HasRect(Protocol):
+    def rect(self) -> Rect: ...
 
 
 TPosType = Tuple[int, int] | Vector2

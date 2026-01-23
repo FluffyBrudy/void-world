@@ -1,5 +1,5 @@
-from pygame import SRCALPHA, Surface
 import pygame
+from pygame import SRCALPHA, Surface
 
 from ttypes.index_type import UIOptions
 from utils.style_utils import generate_box_model

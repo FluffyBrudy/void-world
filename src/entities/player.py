@@ -23,8 +23,8 @@ from entities.states.player_fsm import (
     RunState,
     SlideState,
 )
+from ui.widgets.progressbar import ProgressBarUI
 from utils.timer import Timer
-from widgets.components.progressbar import ProgressBarUI
 
 TAttackSizes = Dict[str, Tuple[int, int]]
 

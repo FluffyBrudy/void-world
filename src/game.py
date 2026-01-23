@@ -20,6 +20,7 @@ from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug
+from ui.elements.healthbar import HealthbarUI
 from utils.animation import Animation, PostAnimatableAnimation
 from utils.image_utils import load_images, load_spritesheet
 
@@ -233,6 +234,8 @@ class Game:
         bat.set_target(self.player)
         mushroom.set_target(self.player)
 
+        self.hb = HealthbarUI(self.player, width=180)
+
     def handle_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -286,6 +289,7 @@ class Game:
         self.tilemap.render()
         Debug.draw_all(self.screen)
         self.particle_manager.render(self.screen, self.dt)
+        self.hb.render(self.screen, self.scroll)
         pygame.display.flip()
 
 
