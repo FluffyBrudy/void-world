@@ -1,7 +1,9 @@
-from typing import Optional, Protocol, Tuple, TypedDict
+from typing import Dict, Optional, Protocol, Tuple, TypedDict
 
-from pygame import Rect, Vector2
+from pygame import Rect, Surface, Vector2
 from pygame.typing import ColorLike, RectLike
+
+TPosType = Tuple[int, int] | Tuple[float, float] | Vector2
 
 
 class ImageLoadOptions(TypedDict, total=False):
@@ -47,4 +49,13 @@ class HasRect(Protocol):
     def rect(self) -> Rect: ...
 
 
-TPosType = Tuple[int, int] | Vector2
+class DamagableEntity(Protocol):
+    def hitbox(self) -> Rect: ...
+
+    @property
+    def stats(self) -> Dict: ...
+
+
+class Renderable(Protocol):
+    def render(self, screen: Surface, pos_offset: TPosType): ...
+    def update(self): ...

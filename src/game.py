@@ -1,4 +1,5 @@
-from typing import Dict
+from turtle import width
+from typing import Dict, List
 
 import pygame
 
@@ -20,6 +21,7 @@ from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug
+from ttypes.index_type import Renderable
 from ui.elements.healthbar import HealthbarUI
 from utils.animation import Animation, PostAnimatableAnimation
 from utils.image_utils import load_images, load_spritesheet
@@ -235,6 +237,10 @@ class Game:
         mushroom.set_target(self.player)
 
         self.hb = HealthbarUI(self.player, width=180)
+        self.hb_ui: List[Renderable] = []
+
+        for entity in Bat.get_by_group():
+            self.hb_ui.append(HealthbarUI(entity, width=180))
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -290,6 +296,9 @@ class Game:
         Debug.draw_all(self.screen)
         self.particle_manager.render(self.screen, self.dt)
         self.hb.render(self.screen, self.scroll)
+        for ui in self.hb_ui:
+            ui.update()
+            ui.render(self.screen, self.scroll)
         pygame.display.flip()
 
 
