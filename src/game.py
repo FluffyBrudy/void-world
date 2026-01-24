@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 import pygame
 
@@ -15,12 +15,11 @@ from constants import (
 )
 from effects.particle_manager import ParticleManager
 from entities.base_entity import BaseEntity
-from entities.enemy_entity import Bat, Mushroom
+from entities.enemy_entity import Bat, Enemy, Mushroom
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug
-from ttypes.index_type import Renderable
 from ui.elements.healthbar import HealthbarUI
 from utils.animation import Animation, PostAnimatableAnimation
 from utils.image_utils import load_images, load_spritesheet
@@ -37,7 +36,7 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-        interface_classes = (BaseEntity, Tilemap, ParallaxBg, ParticleManager)
+        interface_classes = (BaseEntity, Tilemap, ParallaxBg, ParticleManager, Enemy)
         for interface in interface_classes:
             interface.game = self
 
@@ -290,10 +289,8 @@ class Game:
         self.tilemap.render()
         Debug.draw_all(self.screen)
         self.particle_manager.render(self.screen, self.dt)
+        self.hb.update()
         self.hb.render(self.screen, self.scroll)
-        for ui in self.hb_ui:
-            ui.update()
-            ui.render(self.screen, self.scroll)
         pygame.display.flip()
 
 

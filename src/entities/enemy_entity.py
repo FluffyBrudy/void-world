@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Optional, Tuple, TypeVar, cast, override
+from typing import TYPE_CHECKING, Dict, Generic, Optional, Tuple, TypeVar, cast
 
 from pygame import Vector2
 from pygame.surface import Surface
@@ -17,23 +17,36 @@ from ttypes.index_type import TPosType
 from ui.elements.healthbar import HealthbarUI
 from utils.timer import Timer
 
+if TYPE_CHECKING:
+    from game import Game
+
 TEntity = TypeVar("TEntity", bound="BaseEntity")
 
 
 class Enemy(Generic[TEntity], ABC):
+    game: "Game" = None  # type: ignore
+
     def __init__(
         self,
         etype: str,
-        hit_timer_ms: int,
-        attack_timer_ms: int,
-        chase_radius: int,
+        hit_timer_ms: int = 0,
+        attack_timer_ms: int = 0,
+        chase_radius: int = 400,
     ) -> None:
         self.target: Optional["BaseEntity"] = None
-        self.hit_timer = Timer(hit_timer_ms, stale_init=True)
-        self.attack_timer = Timer(attack_timer_ms, stale_init=True)
         self.chase_radius = chase_radius
-
         self.stats = {"health": 1.0, "damage": 0.1}
+
+        # Animation-based timers
+        hit_anim = self.game.assets[f"{etype}/hit"]
+        attack_anim = self.game.assets[f"{etype}/attack"]
+
+        # Convert animation length to milliseconds
+        anim_hit_ms = int(hit_anim.frames_len * hit_anim.animation_speed * 1000)
+        anim_attack_ms = int(attack_anim.frames_len * attack_anim.animation_speed * 1000)
+
+        self.hit_timer = Timer(hit_timer_ms + anim_hit_ms, stale_init=True)
+        self.attack_timer = Timer(attack_timer_ms + anim_attack_ms, stale_init=True)
 
         self.healthbar = HealthbarUI(self, width=100, height=10)
 
@@ -58,8 +71,24 @@ class Enemy(Generic[TEntity], ABC):
         self.healthbar.on_alter(self.stats["health"])
         self.hit_timer.reset_to_now()
 
+    def render(self, surface: Surface, offset: TPosType):
+        self_as_entity: BaseEntity = cast(BaseEntity, self)
+        self.healthbar.render(surface, offset)
+        frame, pos = self_as_entity.get_renderable(offset)
 
-class Bat(AirEntity, Enemy["Bat"]):
+        if not self.hit_timer.has_reached_interval():
+            frame_cp = frame.copy()
+
+            t = pygame.time.get_ticks() * 0.02
+            alpha = (math.sin(t) * 0.5 + 0.5) * 255
+
+            frame_cp.set_alpha(int(alpha))
+            surface.blit(frame_cp, pos)
+        else:
+            surface.blit(frame, pos)
+
+
+class Bat(Enemy["Bat"], AirEntity):
     def __init__(
         self,
         pos: Tuple[int, int],
@@ -67,8 +96,8 @@ class Bat(AirEntity, Enemy["Bat"]):
         /,
         chase_radius: int = 500,
         attack_radius: Optional[int] = None,
-        hit_timer_ms: int = 1000,
-        attack_timer_ms: int = 1000,
+        hit_timer_ms: int = 2000,
+        attack_timer_ms: int = 1700,
         offset: Tuple[int, int] = (0, 0),
     ):
         states: Dict[str, State] = {
@@ -78,17 +107,12 @@ class Bat(AirEntity, Enemy["Bat"]):
             "hit": bat_fsm.HitState(),
         }
 
-        hit_animation = self.game.assets["bat" + "/" + "hit"]
-        attack_animation = self.game.assets["bat" + "/" + "attack"]
-        bat_hit_animation_time = int(hit_animation.frames_len * hit_animation.animation_speed * 1000)
-        bat_attack_animation_time = int(attack_animation.frames_len * attack_animation.animation_speed * 1000)
-
         AirEntity.__init__(self, "bat", pos, size, states, offset)
         Enemy.__init__(
             self,
             etype="bat",
-            attack_timer_ms=bat_hit_animation_time + hit_timer_ms,
-            hit_timer_ms=bat_attack_animation_time + attack_timer_ms,
+            attack_timer_ms=hit_timer_ms,
+            hit_timer_ms=attack_timer_ms,
             chase_radius=chase_radius,
         )
 
@@ -108,8 +132,12 @@ class Bat(AirEntity, Enemy["Bat"]):
         distance = self.pos.distance_to(entity.pos)
         return distance <= self.attack_radius
 
+    def update(self, dt: float):
+        self.healthbar.update()
+        return super().update(dt)
 
-class Mushroom(GroundEntity, Enemy["Mushroom"]):
+
+class Mushroom(Enemy["Mushroom"], GroundEntity):
     def __init__(
         self,
         pos: Tuple[int, int],
@@ -127,16 +155,13 @@ class Mushroom(GroundEntity, Enemy["Mushroom"]):
             "hit": mus_fsm.HitState(),
             "run": mus_fsm.RunState(),
         }
-        hit_animation = self.game.assets["mushroom" + "/" + "hit"]
-        attack_animation = self.game.assets["mushroom" + "/" + "attack"]
-        hit_animation_time = int(hit_animation.frames_len * hit_animation.animation_speed * 1000)
-        attack_animation_time = int(attack_animation.frames_len * attack_animation.animation_speed * 1000)
+
         GroundEntity.__init__(self, "mushroom", pos, size, states, offset)
         Enemy.__init__(
             self,
             etype="mushroom",
-            hit_timer_ms=hit_animation_time + hit_timer_ms,
-            attack_timer_ms=attack_animation_time + attack_timer_ms,
+            hit_timer_ms=hit_timer_ms,
+            attack_timer_ms=attack_timer_ms,
             chase_radius=chase_radius,
         )
 
@@ -151,20 +176,3 @@ class Mushroom(GroundEntity, Enemy["Mushroom"]):
     def update(self, dt: float):
         self.healthbar.update()
         return super().update(dt)
-
-    @override
-    def render(self, surface: Surface, offset: TPosType):
-        pgdebug(f"{self.hit_timer.has_reached_interval()}")
-        self.healthbar.render(surface, offset)
-        frame, pos = self.get_renderable(offset)
-
-        if not self.hit_timer.has_reached_interval():
-            frame_cp = frame.copy()
-
-            t = pygame.time.get_ticks() * 0.02
-            alpha = (math.sin(t) * 0.5 + 0.5) * 255
-
-            frame_cp.set_alpha(int(alpha))
-            surface.blit(frame_cp, pos)
-        else:
-            surface.blit(frame, pos)

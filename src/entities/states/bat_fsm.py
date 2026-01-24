@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Type
+
 from constants import BASE_SPEED
 from entities.player import Player
 from entities.states.base_fsm import State
-
 
 if TYPE_CHECKING:
     from entities.enemy_entity import Bat
@@ -72,10 +72,7 @@ class ChaseState(State["Bat"]):
         distance = (entity.pos).distance_to(entity.target.pos)
         if distance > entity.chase_radius:
             return "fly"
-        if (
-            distance <= entity.attack_radius
-            and entity.attack_timer.has_reached_interval()
-        ):
+        if distance <= entity.attack_radius and entity.attack_timer.has_reached_interval():
             return "attack"
 
         return None
@@ -123,7 +120,6 @@ class HitState(State["Bat"]):
         super().__init__("hit")
 
     def enter(self, entity: "Bat") -> None:
-        entity.hit_timer.reset_to_now()
         entity.velocity *= 0
 
     def can_transition(self, entity: "Bat"):

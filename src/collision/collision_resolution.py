@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from entities.enemy_entity import Bat, Mushroom
@@ -6,34 +6,39 @@ if TYPE_CHECKING:
 
 
 def player_bat_collision(player: "Player", bat: "Bat", /):
-    state = bat.get_state()
-
-    if state == "hit" or not player.hit_timer.has_reached_interval():
-        return
-
-    if state not in {"chase", "attack"}:
-        return
-
-    if player.attack_hitbox().colliderect(bat.hitbox()):
-        if state == "chase" and player.is_attacking:
-            bat.transition_to("hit")
-            bat.take_damage(0.1)
-        elif state == "attack" and not player.is_dashing and bat.animation.frame_index >= bat.animation.frames_len // 2:
-            player.transition_to("hit")
-            player.take_damage(0.1)
+    _base_collision(player, bat)
 
 
 def player_mushroom_collision(player: "Player", mushroom: "Mushroom", /):
-    bat_state = mushroom.get_state()
+    _base_collision(player, mushroom)
 
-    if player.attack_hitbox().colliderect(mushroom.hitbox()):
-        if player.is_attacking and mushroom.hit_timer.has_reached_interval():
-            mushroom.transition_to("hit")
-            mushroom.take_damage(0.1)
+
+def _attack_phase(entity: "Player |  Mushroom | Bat") -> Literal["startup", "active", "finish"]:
+    state = entity.current_state
+    frame_index = entity.animation.frame_index
+
+    if frame_index < state.startup_frame:
+        return "startup"
+    if frame_index < state.startup_frame + state.active_frame:
+        return "active"
+    return "finish"
+
+
+def _base_collision(player: "Player", entity: "Mushroom | Bat"):
+    if not (player.get_state() == "attack" or entity.get_state() == "attack"):
+        return
+
+    state = entity.get_state()
+
+    if player.attack_hitbox().colliderect(entity.hitbox()):
+        if player.is_attacking and entity.hit_timer.has_reached_interval():
+            entity.transition_to("hit")
+            entity.take_damage(player.stats["damage"])
         elif (
-            bat_state == "attack"
+            state == "attack"
+            and player.hit_timer.has_reached_interval()
             and not player.is_dashing
-            and mushroom.animation.frame_index >= mushroom.animation.frames_len // 2
+            and _attack_phase(entity) == "active"
         ):
             player.transition_to("hit")
-            player.take_damage(0.1)
+            player.take_damage(entity.stats["damage"])

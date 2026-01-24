@@ -61,7 +61,7 @@ class RunState(State["Mushroom"]):
 
 class AttackState(State["Mushroom"]):
     def __init__(self):
-        super().__init__("attack")
+        super().__init__("attack", 6, 3)
 
     def enter(self, entity: "Mushroom"):
         entity.velocity *= 0
