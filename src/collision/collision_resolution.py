@@ -17,6 +17,9 @@ def _attack_phase(entity: "Player |  Mushroom | Bat") -> Literal["startup", "act
     state = entity.current_state
     frame_index = entity.animation.frame_index
 
+    if state.startup_frame == 0:
+        return "active"
+
     if frame_index < state.startup_frame:
         return "startup"
     if frame_index < state.startup_frame + state.active_frame:

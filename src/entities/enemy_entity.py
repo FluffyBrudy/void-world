@@ -37,11 +37,9 @@ class Enemy(Generic[TEntity], ABC):
         self.chase_radius = chase_radius
         self.stats = {"health": 1.0, "damage": 0.1}
 
-        # Animation-based timers
         hit_anim = self.game.assets[f"{etype}/hit"]
         attack_anim = self.game.assets[f"{etype}/attack"]
 
-        # Convert animation length to milliseconds
         anim_hit_ms = int(hit_anim.frames_len * hit_anim.animation_speed * 1000)
         anim_attack_ms = int(attack_anim.frames_len * attack_anim.animation_speed * 1000)
 
