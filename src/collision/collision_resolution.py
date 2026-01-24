@@ -24,18 +24,14 @@ def player_bat_collision(player: "Player", bat: "Bat", /):
 
 
 def player_mushroom_collision(player: "Player", mushroom: "Mushroom", /):
-    state = mushroom.get_state()
+    bat_state = mushroom.get_state()
 
-    if state == "hit" or not player.hit_timer.has_reached_interval():
-        return
-
-    if state not in {"run", "attack"}:
-        return
     if player.attack_hitbox().colliderect(mushroom.hitbox()):
-        if state == "run" and player.is_attacking:
+        if player.is_attacking and mushroom.hit_timer.has_reached_interval():
             mushroom.transition_to("hit")
+            mushroom.take_damage(0.1)
         elif (
-            state == "attack"
+            bat_state == "attack"
             and not player.is_dashing
             and mushroom.animation.frame_index >= mushroom.animation.frames_len // 2
         ):

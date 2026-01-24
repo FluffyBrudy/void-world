@@ -236,10 +236,6 @@ class Game:
         mushroom.set_target(self.player)
 
         self.hb = HealthbarUI(self.player, width=180)
-        self.hb_ui: List[Renderable] = []
-
-        for entity in Bat.get_by_group():
-            self.hb_ui.append(HealthbarUI(entity, width=180))
 
     def handle_event(self):
         for event in pygame.event.get():

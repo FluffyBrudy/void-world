@@ -118,9 +118,8 @@ class BaseEntity(ABC):
         return frame, render_pos
 
     def render(self, surface: pygame.Surface, offset: TPosType):
-        if self.animation:
-            frame, render_pos = self.get_renderable(offset)
-            surface.blit(frame, render_pos)
+        frame, render_pos = self.get_renderable(offset)
+        surface.blit(frame, render_pos)
 
     @classmethod
     def add(cls: Type[TEntity], instance: TEntity):
