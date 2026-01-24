@@ -3,11 +3,11 @@ from typing import (
     Literal,
     Tuple,
 )
+
 import pygame
 
 from entities.base_entity import BaseEntity
-from entities.states.player_fsm import State
-
+from entities.states.base_fsm import State
 
 T4Directions = Literal["up", "down", "left", "right"]
 TContactSides = Dict[T4Directions, bool]
@@ -26,65 +26,20 @@ class PhysicsEntity(BaseEntity):
         states: Dict[str, State],
         offset: Tuple[int, int] = (0, 0),
     ):
-        super().__init__(etype, pos, size)
-
-        self.states = states
-
-        assert len(states.keys()) > 0
-        default_state = "idle" if "idle" in self.states else list(self.states.keys())[0]
-        self.current_state: State = self.states[default_state]
-
-        self.animation = self.game.assets[etype + "/" + default_state]
+        super().__init__(etype, pos, size, states, offset)
 
         self.velocity = pygame.Vector2()
-
         self.obey_gravity = True
 
-        self.flipped = False
-
-        self.contact_sides: TContactSides = {
+        self.contact_sides = {
             "left": False,
             "right": False,
             "up": False,
             "down": False,
         }
 
-        self.animation = self.game.assets[etype + "/" + self.current_state.name]
-
-        self.offset = offset
-
-    def rect(self):
-        return pygame.Rect(self.pos, self.animation.get_frame().size)
-
-    def hitbox(self):
-        x, y = self.pos
-        ox, oy = self.offset
-        new_w, new_h = self.size[0] - 2 * ox, self.size[1] - 2 * oy
-        new_y = oy + y
-        new_x = x + ox
-        return pygame.Rect(new_x, new_y, new_w, new_h)
-
     def grounded(self):
         return self.contact_sides["down"]
-
-    def set_state(self, new_state: str):
-        if new_state != self.current_state.name:
-            self.current_state = self.states[new_state]
-            self.animation = self.game.assets[self.etype + "/" + new_state].copy()
-
-    def get_state(self) -> str:
-        return self.current_state.name
-
-    def transition_to(self, new_state: str):
-        self.current_state.exit(self)
-        self.set_state(new_state)
-        self.current_state.enter(self)
-
-    def manage_state(self):
-        next_state = self.current_state.can_transition(self)
-        if next_state is not None:
-            self.transition_to(next_state)
-        self.current_state.update(self)
 
     def collision_horizontal(self):
         tiles = self.game.tilemap.physics_rect_around(self.pos)
@@ -95,9 +50,7 @@ class PhysicsEntity(BaseEntity):
                 self.__resolve_horizontal_collision(hitbox, tile)
                 break
 
-    def __resolve_horizontal_collision(
-        self, hitbox: pygame.Rect, tile_rect: pygame.Rect
-    ):
+    def __resolve_horizontal_collision(self, hitbox: pygame.Rect, tile_rect: pygame.Rect):
         if self.velocity.x < 0:
             self.pos.x += tile_rect.right - hitbox.left
         elif self.velocity.x > 0:
@@ -124,37 +77,12 @@ class PhysicsEntity(BaseEntity):
         tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
 
         hitbox = self.hitbox()
-        self.contact_sides["left"] = (
-            hitbox.move(-1, 0).collidelist(tiles_rect_around) >= 0
-        )
-        self.contact_sides["right"] = (
-            hitbox.move(1, 0).collidelist(tiles_rect_around) >= 0
-        )
-        self.contact_sides["down"] = (
-            hitbox.move(0, 1).collidelist(tiles_rect_around) >= 0
-        )
-        self.contact_sides["up"] = (
-            hitbox.move(0, -1).collidelist(tiles_rect_around) >= 0
-        )
+        self.contact_sides["left"] = hitbox.move(-1, 0).collidelist(tiles_rect_around) >= 0
+        self.contact_sides["right"] = hitbox.move(1, 0).collidelist(tiles_rect_around) >= 0
+        self.contact_sides["down"] = hitbox.move(0, 1).collidelist(tiles_rect_around) >= 0
+        self.contact_sides["up"] = hitbox.move(0, -1).collidelist(tiles_rect_around) >= 0
 
     def update(self, dt: float):
         self.handle_movement(dt)
         self.identify_contact_sides()
-        self.manage_state()
-        self.animation.update()
-
-    def get_renderable(self):
-        frame = self.animation.get_frame()
-        render_pos = self.pos - self.game.scroll
-
-        if self.flipped:
-            frame = pygame.transform.flip(frame, True, False)
-
-        render_pos.x += (self.size[0] - frame.get_width()) / 2
-        render_pos.y += (self.size[1] - frame.get_height()) / 2
-
-        return frame, render_pos
-
-    def render(self, surface: pygame.Surface):
-        frame, render_pos = self.get_renderable()
-        surface.blit(frame, render_pos)
+        super().update(dt)

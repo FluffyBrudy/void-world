@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, Optional, TypeVar, Generic
+from typing import TYPE_CHECKING, Generic, Optional, TypeVar
 
 if TYPE_CHECKING:
-    from entities.physics_entity import PhysicsEntity
+    from entities.base_entity import BaseEntity
 
-TEntity = TypeVar("TEntity", bound="PhysicsEntity")
+TEntity = TypeVar("TEntity", bound="BaseEntity")
 
 
 class State(Generic[TEntity]):

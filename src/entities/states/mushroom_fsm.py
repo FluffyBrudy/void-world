@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from entities.player import Player
 from entities.states.base_fsm import State
 
 if TYPE_CHECKING:
@@ -48,10 +47,7 @@ class RunState(State["Mushroom"]):
         if entity.is_target_vulnarable():
             return "idle"
 
-        if (
-            entity.can_attack(entity.target)
-            and entity.attack_timer.has_reached_interval()
-        ):
+        if entity.can_attack(entity.target) and entity.attack_timer.has_reached_interval():
             return "attack"
 
         if not entity.can_chase(entity.target):

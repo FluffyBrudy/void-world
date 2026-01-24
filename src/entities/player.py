@@ -23,6 +23,7 @@ from entities.states.player_fsm import (
     RunState,
     SlideState,
 )
+from ttypes.index_type import TPosType
 from ui.widgets.progressbar import ProgressBarUI
 from utils.timer import Timer
 
@@ -201,9 +202,9 @@ class Player(PhysicsEntity):
         self.manage_dash()
         super().manage_state()
 
-    def render(self, surface: pygame.Surface):
+    def render(self, surface: pygame.Surface, offset: TPosType):
         if not self.is_dashing:
-            frame, pos = self.get_renderable()
+            frame, pos = self.get_renderable(offset)
             frame_copy = frame.copy()
             surface.blit(frame_copy, pos)
 

@@ -1,32 +1,34 @@
-from typing import Unpack, override
+from typing import Callable, Unpack, cast, override
 
 from pygame.math import Vector2
+from pygame.rect import Rect
 from pygame.surface import Surface
 
-from lib.eventbus import event_bus
-from ttypes.index_type import DamagableEntity, TPosType, UIOptions
+from ttypes.index_type import Rectable, TPosType, UIOptions
 from ui.widgets.progressbar import ProgressBarUI
 from utils.timer import Timer
 
 
 class HealthbarUI(ProgressBarUI):
-    def __init__(self, entity: "DamagableEntity", **overrides: Unpack[UIOptions]) -> None:
+    def __init__(self, entity: object, **overrides: Unpack[UIOptions]) -> None:
         """rectable instance is any class that has either hitbox method or rect method
         that returns Rect object
         """
 
+        if getattr(entity, "hitbox") is not None:
+            self.rect = entity.hitbox  # type: ignore
+        elif getattr(entity, "rect", None) is not None:
+            self.rect = entity.rect  # type: ignore
+        else:
+            raise TypeError("entity must support hitbox or rect method")
+
         super().__init__(**overrides)
 
-        self.entity = entity
-        self.rect = entity.hitbox
-
+        self.rect = cast(Callable[[], Rect], self.rect)
+        self.entity = cast(Rectable, entity)
         self.visibility_timer = Timer(2000)
-        event_bus.subscribe("enemy_damaged", self._on_alter)
 
-    def _on_alter(self, *, entity: "DamagableEntity", amount: float):
-        if entity != self.entity:
-            return
-
+    def on_alter(self, amount: float, /):
         self.set_health(amount)
         self.trigger_visibility()
 

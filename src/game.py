@@ -1,4 +1,3 @@
-from turtle import width
 from typing import Dict, List
 
 import pygame
@@ -290,8 +289,8 @@ class Game:
     def render_all(self):
         self.screen.fill((50, 50, 100))
         self.parallaxbg.render()
-        self.player.render(self.screen)
-        BaseEntity.render_all(self.dt)
+        self.player.render(self.screen, self.scroll)
+        BaseEntity.render_all(self.screen, self.dt, self.scroll)
         self.tilemap.render()
         Debug.draw_all(self.screen)
         self.particle_manager.render(self.screen, self.dt)

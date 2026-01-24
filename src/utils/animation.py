@@ -1,4 +1,5 @@
 from typing import Optional, Sequence, override
+
 from pygame import Surface
 
 from utils.timer import Timer
@@ -7,9 +8,7 @@ from utils.timer import Timer
 class Animation:
     # __slots__ = ("frames", "frames_len", "loop", "frame_index", "animation_speed")
 
-    def __init__(
-        self, frames: Sequence[Surface], animation_speed=0.1, loop=True
-    ) -> None:
+    def __init__(self, frames: Sequence[Surface], animation_speed=0.1, loop=True) -> None:
         self.loop = loop
         self.frame_index = 0
         self.frames = frames
@@ -50,9 +49,7 @@ class Animation:
     def reset_animation(self):
         self.frame_index = 0
 
-    def force_change_frames(
-        self, frames: Sequence[Surface], animation_speed: Optional[float] = None
-    ):
+    def force_change_frames(self, frames: Sequence[Surface], animation_speed: Optional[float] = None):
         if animation_speed is not None:
             self.animation_speed = animation_speed
         self.frames = frames
@@ -114,9 +111,7 @@ class PostAnimatableAnimation(Animation):
 class TimerAnimation:
     __slots__ = ("frames", "loop", "_timer", "_current_index")
 
-    def __init__(
-        self, frames: Sequence[Surface], frame_duration_ms: int = 100, loop=True
-    ) -> None:
+    def __init__(self, frames: Sequence[Surface], frame_duration_ms: int = 100, loop=True) -> None:
         self.frames = frames
         self.loop = loop
         self._current_index = 0

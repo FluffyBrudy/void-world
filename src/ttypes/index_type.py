@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Protocol, Tuple, TypedDict
+from typing import Any, Dict, Optional, Protocol, Tuple, TypedDict
 
 from pygame import Rect, Surface, Vector2
 from pygame.typing import ColorLike, RectLike
@@ -41,19 +41,8 @@ class UIOptions(BoxModel, total=False):
     fill_color: ColorLike
 
 
-class HasHitbox(Protocol):
-    def hitbox(self) -> Rect: ...
-
-
-class HasRect(Protocol):
+class Rectable(Protocol):
     def rect(self) -> Rect: ...
-
-
-class DamagableEntity(Protocol):
-    def hitbox(self) -> Rect: ...
-
-    @property
-    def stats(self) -> Dict: ...
 
 
 class Renderable(Protocol):
