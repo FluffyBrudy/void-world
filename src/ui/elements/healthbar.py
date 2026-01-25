@@ -10,7 +10,7 @@ from utils.timer import Timer
 
 
 class HealthbarUI(ProgressBarUI):
-    def __init__(self, entity: object, **overrides: Unpack[UIOptions]) -> None:
+    def __init__(self, entity: object, visibility_timer=2000, **overrides: Unpack[UIOptions]) -> None:
         """rectable instance is any class that has either hitbox method or rect method
         that returns Rect object
         """
@@ -26,7 +26,7 @@ class HealthbarUI(ProgressBarUI):
 
         self.rect = cast(Callable[[], Rect], self.rect)
         self.entity = cast(Rectable, entity)
-        self.visibility_timer = Timer(2000)
+        self.visibility_timer = Timer(visibility_timer)
 
     def on_alter(self, amount: float, /):
         self.set_health(amount)

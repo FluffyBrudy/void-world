@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Unpack, cast
+from typing import Unpack, cast
 
 import pygame
 from pygame import Surface

@@ -17,7 +17,7 @@ class Timer:
         self.start_timer = pygame.time.get_ticks()
         if stale_init:
             self.start_timer -= interval - 1
-        self.interval = interval
+        self.interval = int(interval)
 
     def reset_to_now(self):
         self.start_timer = pygame.time.get_ticks()

@@ -12,7 +12,6 @@ from entities.ground_entity import GroundEntity
 from entities.states import bat_fsm as bat_fsm
 from entities.states import mushroom_fsm as mus_fsm
 from entities.states.base_fsm import State
-from pydebug import pgdebug
 from ttypes.index_type import TPosType
 from ui.elements.healthbar import HealthbarUI
 from utils.timer import Timer
@@ -46,7 +45,7 @@ class Enemy(Generic[TEntity], ABC):
         self.hit_timer = Timer(hit_timer_ms + anim_hit_ms, stale_init=True)
         self.attack_timer = Timer(attack_timer_ms + anim_attack_ms, stale_init=True)
 
-        self.healthbar = HealthbarUI(self, width=100, height=10)
+        self.healthbar = HealthbarUI(self, visibility_timer=self.hit_timer.interval, width=100, height=10)
 
     def set_target(self, target: "BaseEntity"):
         self.target = target
@@ -77,8 +76,8 @@ class Enemy(Generic[TEntity], ABC):
         if not self.hit_timer.has_reached_interval():
             frame_cp = frame.copy()
 
-            t = pygame.time.get_ticks() * 0.02
-            alpha = (math.sin(t) * 0.5 + 0.5) * 255
+            t = math.radians(pygame.time.get_ticks() % 360)
+            alpha = (math.sin(t) + 0.5) * 255
 
             frame_cp.set_alpha(int(alpha))
             surface.blit(frame_cp, pos)
