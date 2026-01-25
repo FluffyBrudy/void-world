@@ -1,3 +1,5 @@
+from typing import Any, Callable, List
+
 import pygame
 from pygame import SRCALPHA, Surface
 
@@ -19,6 +21,11 @@ class UIBase:
 
         local_size = self.box_model["full_width"], self.box_model["full_height"]
         self.local_surface = Surface(local_size, SRCALPHA)
+
+        self.renderable_plugins: List[Callable[[Surface], Any]] = []
+
+    def add_plugin(self, cb: Callable[[Surface], Any]) -> None:
+        self.renderable_plugins.append(cb)
 
     def draw_base(self):
         local_surf = self.local_surface
@@ -55,5 +62,7 @@ class UIBase:
 
     def render(self, screen: Surface):
         self.draw_base()
+        for plugin in self.renderable_plugins:
+            plugin(self.local_surface)
         pos = (self.box_model["offset_x"], self.box_model["offset_y"])
         screen.blit(self.local_surface, pos)

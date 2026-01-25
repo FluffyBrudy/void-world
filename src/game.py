@@ -21,6 +21,7 @@ from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug
 from ui.widgets.healthbar import HealthbarUI
+from ui.widgets.overlay import CooldownOverlay
 from utils.animation import Animation, PostAnimatableAnimation
 from utils.image_utils import load_images, load_spritesheet
 
@@ -234,12 +235,23 @@ class Game:
         bat.set_target(self.player)
         mushroom.set_target(self.player)
 
-        self.hb = HealthbarUI(self.player, width=180)
+        self.cd_overlay = CooldownOverlay(
+            10000,
+            100,
+            border_radius=50,
+            border_width=5,
+            margin_x=500,
+            margin_y=500,
+            background=(0, 0, 0, 0),
+            border_color=(255, 255, 255, 255),
+        )
 
     def handle_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif getattr(event, "key", None) == pygame.K_r:
+                self.cd_overlay.reset()
 
     def player_center_camera(self):
         sw, sh = self.screen.size
@@ -289,8 +301,7 @@ class Game:
         self.tilemap.render()
         Debug.draw_all(self.screen)
         self.particle_manager.render(self.screen, self.dt)
-        self.hb.update()
-        self.hb.render(self.screen, self.scroll)
+        self.cd_overlay.render(self.screen)
         pygame.display.flip()
 
 

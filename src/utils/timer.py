@@ -23,7 +23,7 @@ class Timer:
         self.start_timer = pygame.time.get_ticks()
 
     def has_reached_interval(self):
-        return (pygame.time.get_ticks() - self.start_timer) >= self.interval
+        return self.get_timediff() >= self.interval
 
     def has_reached(self, interval_ratio: float):
         if 0 >= interval_ratio >= 1.0:
@@ -34,3 +34,12 @@ class Timer:
     def stale(self):
         if self.interval > 0:
             self.start_timer -= self.interval - 1
+
+    def get_timediff(self):
+        return pygame.time.get_ticks() - self.start_timer
+
+    def get_timediff_ratio(self) -> float:
+        td = self.get_timediff()
+        if td >= self.interval:
+            return 1.0
+        return td / self.interval
