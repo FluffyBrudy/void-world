@@ -20,7 +20,7 @@ from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from pydebug import Debug
-from ui.elements.healthbar import HealthbarUI
+from ui.widgets.healthbar import HealthbarUI
 from utils.animation import Animation, PostAnimatableAnimation
 from utils.image_utils import load_images, load_spritesheet
 

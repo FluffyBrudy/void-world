@@ -13,7 +13,7 @@ from entities.states import bat_fsm as bat_fsm
 from entities.states import mushroom_fsm as mus_fsm
 from entities.states.base_fsm import State
 from ttypes.index_type import TPosType
-from ui.elements.healthbar import HealthbarUI
+from ui.widgets.healthbar import HealthbarUI
 from utils.timer import Timer
 
 if TYPE_CHECKING:

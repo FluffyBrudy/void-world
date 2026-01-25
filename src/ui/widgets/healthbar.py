@@ -5,12 +5,14 @@ from pygame.rect import Rect
 from pygame.surface import Surface
 
 from ttypes.index_type import Rectable, TPosType, UIOptions
-from ui.widgets.progressbar import ProgressBarUI
+from ui.elements.progressbar import ProgressBarUI
 from utils.timer import Timer
 
 
 class HealthbarUI(ProgressBarUI):
-    def __init__(self, entity: object, visibility_timer=2000, **overrides: Unpack[UIOptions]) -> None:
+    def __init__(
+        self, entity: object, visibility_timer=2000, **overrides: Unpack[UIOptions]
+    ) -> None:
         """rectable instance is any class that has either hitbox method or rect method
         that returns Rect object
         """
