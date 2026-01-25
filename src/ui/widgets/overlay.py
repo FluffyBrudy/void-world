@@ -52,7 +52,7 @@ class CooldownOverlay(UIBase):
         op = self.overlay_parent
         op.fill((0, 0, 0, 0))
         if len(points) > 2:
-            draw.polygon(op, (0, 0, 0, 100), points)
+            draw.polygon(op, (0, 0, 0, 160), points)
 
         pos = self.box_model["left"], self.box_model["top"]
         surface.blit(op, pos)

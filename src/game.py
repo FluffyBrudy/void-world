@@ -234,16 +234,15 @@ class Game:
         mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20))
         bat.set_target(self.player)
         mushroom.set_target(self.player)
-
         self.cd_overlay = CooldownOverlay(
-            10000,
-            100,
+            progress_time=2000,
+            size=80,
             border_radius=50,
-            border_width=5,
+            border_width=2,
             margin_x=500,
             margin_y=500,
-            background=(0, 0, 0, 0),
-            border_color=(255, 255, 255, 255),
+            background=(200, 200, 200, 150),
+            border_color=(200, 200, 200, 150),
         )
 
     def handle_event(self):
