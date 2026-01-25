@@ -60,10 +60,19 @@ class Player(PhysicsEntity):
         self.dash_timer = Timer(2000, True)
         self.hit_timer = Timer(2000, True)
 
+        self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.1, "mana_regain": 0.001}
+        self.skills: Dict[str, Dict[str, float]] = {
+            "dash": {
+                "mana_cost": 0.3,
+                "cooldown": self.dash_timer.interval + 1000,
+                "damage": 0.1,
+                "health_regain": 0.0,
+            },
+        }
         self.healthbar = ProgressBarUI(fill_color="lime")  # type: ignore
+        self.healthbar.set_progress(self.stats["health"])
         self.manabar = ProgressBarUI(fill_color="skyblue", margin_y=int(self.healthbar.fullsize[1] * 1.4))  # type: ignore
-
-        self.stats: Dict[str, float] = {"health": 1.0, "damage": 0.1}
+        self.manabar.set_progress(self.stats["mana"])
 
     def take_damage(self, damage: float):
         self.stats["health"] -= damage
@@ -145,9 +154,12 @@ class Player(PhysicsEntity):
             not self.current_state.name == "wallslide"
             and not self.is_dashing
             and self.dash_timer.has_reached_interval()
+            and self.stats["mana"] >= self.skills["dash"]["mana_cost"]
         ):
             self.is_dashing = True
             self.dash_timer.reset_to_now()
+            self.stats["mana"] -= self.skills["dash"]["mana_cost"]
+            self.manabar.set_progress(self.stats["mana"])
 
     def handle_movement(self, dt: float):
         frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
@@ -183,6 +195,13 @@ class Player(PhysicsEntity):
             filled=True,
         )
 
+    def manage_stats(self):
+        if self.stats["mana"] < 1:
+            self.stats["mana"] += self.stats["mana_regain"]
+            if self.stats["mana"] > 1:
+                self.stats["mana"] = 1
+            self.manabar.set_progress(self.stats["mana"])
+
     @override
     def update(self, dt: float):
         self.input()
@@ -190,6 +209,7 @@ class Player(PhysicsEntity):
             self.velocity.x = 0
         if self.can_slide():
             self.velocity.y = min(self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT)
+        self.manage_stats()
         self.healthbar.update()
         self.manabar.update()
         super().update(dt)
