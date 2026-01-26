@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Set
 
 from pygame import Surface
 
-from effects.particles import Particle
+from particle.particles import Particle
 
 if TYPE_CHECKING:
     from game import Game
@@ -27,4 +27,3 @@ class ParticleManager:
             if not particle.update(dt):
                 particle.render(surface, offset)
                 new_particles.add(particle)
-        self.particles = new_particles

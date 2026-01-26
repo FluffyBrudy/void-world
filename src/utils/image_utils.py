@@ -1,8 +1,9 @@
-import sys
 import re
-import pygame
+import sys
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Tuple, TypedDict, Union, Unpack
+from typing import Dict, List, Sequence, Tuple, Union, Unpack
+
+import pygame
 
 from logger import logger
 from ttypes.index_type import ImageLoadOptions
@@ -17,9 +18,7 @@ def load_image(path: Path, /, **options: Unpack[ImageLoadOptions]) -> pygame.Sur
     return apply_image_options(image, **options)
 
 
-def load_spritesheet(
-    path: Path, frame_size: Tuple[int, int], /, **options: Unpack[ImageLoadOptions]
-):
+def load_spritesheet(path: Path, frame_size: Tuple[int, int], /, **options: Unpack[ImageLoadOptions]):
     if not path.exists():
         logger.warning(f"{path} not found")
         sys.exit(1)
@@ -40,11 +39,7 @@ def load_spritesheet(
         y_pos = row * frame_size[1]
         for col in range(col_len):
             topleft = (col * frame_size[0], y_pos)
-            frames.append(
-                apply_image_options(
-                    spritesheet.subsurface((topleft, frame_size)), **options
-                )
-            )
+            frames.append(apply_image_options(spritesheet.subsurface((topleft, frame_size)), **options))
 
     return frames
 
@@ -95,9 +90,7 @@ def load_key_images(
     return res
 
 
-def apply_image_options(
-    image: pygame.Surface, /, **options: Unpack[ImageLoadOptions]
-) -> pygame.Surface:
+def apply_image_options(image: pygame.Surface, /, **options: Unpack[ImageLoadOptions]) -> pygame.Surface:
     colorkey = options.get("colorkey")
     if colorkey is not None:
         image.set_colorkey(colorkey)

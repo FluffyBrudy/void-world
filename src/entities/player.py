@@ -1,6 +1,6 @@
 from math import pi
 from random import uniform
-from typing import Dict, Tuple, override
+from typing import Dict, Literal, Tuple, override
 
 import pygame
 
@@ -11,7 +11,6 @@ from constants import (
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,
 )
-from effects.particles import coned_particles
 from entities.physics_entity import PhysicsEntity
 from entities.states.player_fsm import (
     AttackState,
@@ -23,8 +22,9 @@ from entities.states.player_fsm import (
     RunState,
     SlideState,
 )
+from lib.skill import Skill
+from particle.particles import coned_particles, radial_particles, tail_circle_particles
 from ttypes.index_type import TPosType
-from ui.elements.progressbar import ProgressBarUI
 from utils.timer import Timer
 
 TAttackSizes = Dict[str, Tuple[int, int]]
@@ -61,22 +61,13 @@ class Player(PhysicsEntity):
         self.hit_timer = Timer(2000, True)
 
         self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.5, "mana_regain": 0.001}
-        self.skills: Dict[str, Dict[str, float]] = {
-            "dash": {
-                "mana_cost": 0.3,
-                "cooldown": self.dash_timer.interval + 1000,
-                "damage": 0.1,
-                "health_regain": 0.0,
-            },
+        self.skills: Dict[Literal["dash", "heal"], Skill] = {
+            "dash": Skill(mana_cost=0.3, cooldown=self.dash_timer.interval + 1000, damage=0.1, health_regain=0.0),
+            "heal": Skill(mana_cost=1, cooldown=15000, damage=0, health_regain=0.1),
         }
-        self.healthbar = ProgressBarUI(fill_color="lime")  # type: ignore
-        self.healthbar.set_progress(self.stats["health"])
-        self.manabar = ProgressBarUI(fill_color="skyblue", margin_y=int(self.healthbar.fullsize[1] * 1.4))  # type: ignore
-        self.manabar.set_progress(self.stats["mana"])
 
     def take_damage(self, damage: float):
         self.stats["health"] -= damage
-        self.healthbar.set_progress(self.stats["health"])
 
     def set_attack_size(self, offsets: TAttackSizes):
         self.attack_sizes = offsets
@@ -116,6 +107,9 @@ class Player(PhysicsEntity):
         else:
             self.movement_start_timer.reset_to_now()
 
+        if keys[pygame.K_h]:
+            self.check_and_consume("heal")
+
         if self.current_state.name in ("idle", "run", "jump"):
             if keys[pygame.K_UP]:
                 self.jump()
@@ -154,12 +148,15 @@ class Player(PhysicsEntity):
             not self.current_state.name == "wallslide"
             and not self.is_dashing
             and self.dash_timer.has_reached_interval()
-            and self.stats["mana"] >= self.skills["dash"]["mana_cost"]
+            and self.skills["dash"].can_use(self)
         ):
             self.is_dashing = True
             self.dash_timer.reset_to_now()
-            self.stats["mana"] -= self.skills["dash"]["mana_cost"]
-            self.manabar.set_progress(self.stats["mana"])
+            self.skills["dash"].consume(self)
+
+    def check_and_consume(self, skill_name):
+        if self.skills[skill_name].can_use(self):
+            self.skills[skill_name].consume(self)
 
     def handle_movement(self, dt: float):
         frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
@@ -185,22 +182,13 @@ class Player(PhysicsEntity):
             self.velocity.x = 0  # because if x-comonent of velocity is not resett it keeps dashing
         pm = self.game.particle_manager
         pos = self.hitbox().center
-        coned_particles(
-            pos,
-            tuple(uniform(*PARTICLE_DIR_LEFT) for _ in range(5))
-            if self.flipped
-            else tuple(uniform(*PARTICLE_DIR_RIGHT) for _ in range(5)),
-            pm,
-            color=(0, 255, 255),
-            filled=True,
-        )
+        tail_circle_particles(pos, (-pi / 2, 0, pi / 2), pm, color=(0, 255, 255))
 
     def manage_stats(self):
         if self.stats["mana"] < 1:
             self.stats["mana"] += self.stats["mana_regain"]
             if self.stats["mana"] > 1:
                 self.stats["mana"] = 1
-            self.manabar.set_progress(self.stats["mana"])
 
     @override
     def update(self, dt: float):
@@ -210,8 +198,6 @@ class Player(PhysicsEntity):
         if self.can_slide():
             self.velocity.y = min(self.velocity.y, MAX_FALL_SPEED * WALL_FRICTION_COEFFICIENT)
         self.manage_stats()
-        self.healthbar.update()
-        self.manabar.update()
         super().update(dt)
 
     @override
@@ -227,6 +213,3 @@ class Player(PhysicsEntity):
             frame, pos = self.get_renderable(offset)
             frame_copy = frame.copy()
             surface.blit(frame_copy, pos)
-
-        self.healthbar.render(surface)
-        self.manabar.render(surface)

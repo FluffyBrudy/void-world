@@ -26,7 +26,7 @@ class DotParticle(Particle):
     def __init__(
         self,
         radius: int,
-        pos: Tuple[int, int] | Vector2,
+        pos: TPosType,
         velocity: Tuple[float, float] | Vector2 = (0, 0),
         color: ColorLike = (0, 0, 0, 255),
         filled: bool = False,
@@ -70,3 +70,29 @@ def coned_particles(
             filled=filled,
         )
         group.add(particle)
+
+
+def radial_particles(
+    pos: TPosType,
+    group: "ParticleManager",
+    filled=True,
+    color=(0, 0, 0),
+    radius_range=(4, 8),
+    speed_range=(3, 5),
+):
+    angle = 0
+    full_angle = 2 * pi
+    step = full_angle / 12
+    while angle < full_angle:
+        radius = randint(*radius_range)
+        speed = uniform(*speed_range)
+        velocity = cos(angle) * speed, sin(angle) * speed
+        particle = DotParticle(
+            radius,
+            pos,
+            velocity,
+            color=color,
+            filled=filled,
+        )
+        group.add(particle)
+        angle += step

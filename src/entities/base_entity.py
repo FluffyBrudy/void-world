@@ -36,6 +36,7 @@ class BaseEntity(ABC):
     size: Tuple[int, int]
     flipped: bool
     states: Dict[str, State]
+    stats: Dict[str, float]
     current_state: State
     offset: Tuple[int, int]
     animation: "Animation"
@@ -61,6 +62,8 @@ class BaseEntity(ABC):
         default_state = "idle" if "idle" in self.states else list(self.states.keys())[0]
         self.current_state = self.states[default_state]
         self.animation = self.game.assets[etype + "/" + self.current_state.name]
+
+        self.stats = {"health": 1.0, "mana": float("-inf")}
 
         self.alive = True
 

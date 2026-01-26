@@ -138,6 +138,9 @@ class TimerAnimation:
     def has_animation_end(self) -> bool:
         return not self.loop and self._current_index == len(self.frames) - 1
 
+    def __hash__(self) -> int:
+        return id(self)
+
     @property
     def current_index(self) -> int:
         return self._current_index

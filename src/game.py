@@ -13,17 +13,18 @@ from constants import (
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
 )
-from effects.particle_manager import ParticleManager
 from entities.base_entity import BaseEntity
 from entities.enemy_entity import Bat, Enemy, Mushroom
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
+from particle.particle_manager import ParticleManager
 from pydebug import Debug
-from ui.widgets.healthbar import HealthbarUI
+from ttypes.index_type import ImageLoadOptions
 from ui.widgets.overlay import CooldownOverlay
+from ui.widgets.playerhud import PlayerHUD
 from utils.animation import Animation, PostAnimatableAnimation
-from utils.image_utils import load_images, load_spritesheet
+from utils.image_utils import load_image, load_images, load_spritesheet
 
 TILEMAP_SCALE = 5
 PLAYER_SCALE = TILEMAP_SCALE / 2.5
@@ -37,7 +38,15 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-        interface_classes = (BaseEntity, Tilemap, ParallaxBg, ParticleManager, Enemy, CooldownOverlay)
+        interface_classes = (
+            BaseEntity,
+            Tilemap,
+            ParallaxBg,
+            ParticleManager,
+            Enemy,
+            CooldownOverlay,
+            PlayerHUD,
+        )
         for interface in interface_classes:
             interface.game = self
 
@@ -211,7 +220,15 @@ class Game:
             ),
         }
 
-        self.fonts = {"monogram": pygame.Font(ASSETS_PATH / "fonts" / "monogram.ttf")}
+        skills_default_options: ImageLoadOptions = {"trim_transparent_pixel": (True, None)}
+        self.icons = {
+            "player/skills": {
+                "dash": load_image(ASSETS_PATH / "icons" / "player" / "skill" / "dash.png", **skills_default_options),
+                "heal": load_image(ASSETS_PATH / "icons" / "player" / "skill" / "heal.png", **skills_default_options),
+            }
+        }
+
+        self.fonts = {"monogram": pygame.Font(ASSETS_PATH / "fonts" / "monogram.ttf", size=30)}
 
         self.level = 0
 
@@ -238,23 +255,13 @@ class Game:
         mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20))
         bat.set_target(self.player)
         mushroom.set_target(self.player)
-        self.cd_overlay = CooldownOverlay(
-            progress_time=2000,
-            size=80,
-            border_radius=50,
-            border_width=3,
-            margin_x=500,
-            margin_y=500,
-            background=(0, 0, 0, 200),
-            border_color=(0, 0, 0, 255),
-        )
+
+        self.player_hud = PlayerHUD(self.player)
 
     def handle_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif getattr(event, "key", None) == pygame.K_r:
-                self.cd_overlay.reset()
 
     def player_center_camera(self):
         sw, sh = self.screen.size
@@ -304,7 +311,8 @@ class Game:
         self.tilemap.render()
         Debug.draw_all(self.screen)
         self.particle_manager.render(self.screen, self.dt)
-        self.cd_overlay.render(self.screen)
+        self.player_hud.update()
+        self.player_hud.render(self.screen)
         pygame.display.flip()
 
 
