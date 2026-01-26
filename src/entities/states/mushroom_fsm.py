@@ -84,6 +84,9 @@ class HitState(State["Mushroom"]):
         entity.velocity.x *= 0
 
     def can_transition(self, entity: "Mushroom"):
+        if entity.stats["health"] <= 0.01:
+            return "death"
+
         if entity.target is None:
             return "idle"
 
@@ -101,6 +104,7 @@ class DeathState(State["Mushroom"]):
         entity.velocity *= 0
 
     def can_transition(self, entity: "Mushroom"):
+        print("has,", entity.animation.has_animation_end())
         if entity.animation.has_animation_end():
-            type(entity).remove(entity)
+            entity.alive = False
         return None

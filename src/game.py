@@ -37,7 +37,7 @@ class Game:
 
         self.scroll = pygame.Vector2(0, 0)
         self.running = True
-        interface_classes = (BaseEntity, Tilemap, ParallaxBg, ParticleManager, Enemy)
+        interface_classes = (BaseEntity, Tilemap, ParallaxBg, ParticleManager, Enemy, CooldownOverlay)
         for interface in interface_classes:
             interface.game = self
 
@@ -195,7 +195,9 @@ class Game:
                     (150, 150),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                0.05,
+                False,
             ),
             "mushroom/attack": Animation(
                 load_spritesheet(
@@ -208,6 +210,8 @@ class Game:
                 loop=False,
             ),
         }
+
+        self.fonts = {"monogram": pygame.Font(ASSETS_PATH / "fonts" / "monogram.ttf")}
 
         self.level = 0
 
@@ -238,11 +242,11 @@ class Game:
             progress_time=2000,
             size=80,
             border_radius=50,
-            border_width=2,
+            border_width=3,
             margin_x=500,
             margin_y=500,
-            background=(200, 200, 200, 150),
-            border_color=(200, 200, 200, 150),
+            background=(0, 0, 0, 200),
+            border_color=(0, 0, 0, 255),
         )
 
     def handle_event(self):

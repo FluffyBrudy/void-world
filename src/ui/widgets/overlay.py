@@ -1,5 +1,6 @@
 import math
-from typing import List, Tuple, Unpack
+from turtle import width
+from typing import TYPE_CHECKING, List, Tuple, Unpack
 
 from pygame import draw
 from pygame.constants import SRCALPHA
@@ -9,8 +10,13 @@ from ttypes.index_type import UIOptions
 from ui.base.uibase import UIBase
 from utils.timer import Timer
 
+if TYPE_CHECKING:
+    from game import Game
+
 
 class CooldownOverlay(UIBase):
+    game: "Game" = None  # type: ignore
+
     def __init__(self, progress_time: float, size: float | int, **overrides: Unpack[UIOptions]) -> None:
         super().__init__({"width": int(size), "height": int(size), **overrides})
 
@@ -41,7 +47,8 @@ class CooldownOverlay(UIBase):
         center = (self.radius, self.radius)
         points: List[Tuple[int | float, int | float]] = [center]
 
-        progress = 1 - self.timer.get_timediff_ratio()
+        time_diff = self.timer.get_timediff_ratio()
+        progress = 1 - time_diff
         end_degress = int(progress * 360)
         for degree in range(-90, end_degress - 90):
             angle = math.radians(degree)
@@ -52,10 +59,14 @@ class CooldownOverlay(UIBase):
         op = self.overlay_parent
         op.fill((0, 0, 0, 0))
         if len(points) > 2:
-            draw.polygon(op, (0, 0, 0, 160), points)
+            draw.polygon(op, (200, 200, 200, 160), points)
 
+        time_label = self.game.fonts["monogram"].render(str(round(1 - time_diff, 1)), True, (255, 255, 255, 200))
+        time_lable_pos = (surface.width - time_label.width) // 2, (surface.height - time_label.height) // 2
         pos = self.box_model["left"], self.box_model["top"]
+
         surface.blit(op, pos)
+        surface.blit(time_label, time_lable_pos)
 
     def has_cooldown(self):
         return self.timer.has_reached_interval()

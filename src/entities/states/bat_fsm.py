@@ -123,6 +123,9 @@ class HitState(State["Bat"]):
         entity.velocity *= 0
 
     def can_transition(self, entity: "Bat"):
+        if entity.stats["health"] < 0.001:
+            entity.alive = False
+            return None
         if entity.hit_timer.has_reached_interval():
             return "fly"
         return None

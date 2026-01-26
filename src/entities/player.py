@@ -60,7 +60,7 @@ class Player(PhysicsEntity):
         self.dash_timer = Timer(2000, True)
         self.hit_timer = Timer(2000, True)
 
-        self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.1, "mana_regain": 0.001}
+        self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.5, "mana_regain": 0.001}
         self.skills: Dict[str, Dict[str, float]] = {
             "dash": {
                 "mana_cost": 0.3,

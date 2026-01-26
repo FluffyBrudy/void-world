@@ -62,6 +62,8 @@ class BaseEntity(ABC):
         self.current_state = self.states[default_state]
         self.animation = self.game.assets[etype + "/" + self.current_state.name]
 
+        self.alive = True
+
     def rect(self):
         return pygame.Rect(self.pos, self.animation.get_frame().size)
 
@@ -117,6 +119,11 @@ class BaseEntity(ABC):
 
         return frame, render_pos
 
+    def remove(self):
+        cls = type(self)
+        BaseEntity.__instances.remove(self)
+        BaseEntity.__registry[cls].remove(self)
+
     def render(self, surface: pygame.Surface, offset: TPosType):
         frame, render_pos = self.get_renderable(offset)
         surface.blit(frame, render_pos)
@@ -141,11 +148,15 @@ class BaseEntity(ABC):
         return cast(Set[TEntity], BaseEntity.__registry.get(cls, set()))
 
     @classmethod
-    def remove(cls: Type[TEntity], instance: TEntity):
-        cls.__instances.remove(instance)
-
-    @classmethod
     def render_all(cls, screen: Surface, dt: float, offset: TPosType):
+        killable = set()
         for bat in cls.__instances:
-            bat.update(dt)
-            bat.render(screen, offset)
+            if bat.alive:
+                bat.update(dt)
+                bat.render(screen, offset)
+            else:
+                killable.add(bat)
+
+        if len(killable) > 0:
+            for entity in killable:
+                entity.remove()
