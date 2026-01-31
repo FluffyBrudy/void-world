@@ -91,19 +91,16 @@ class Player(PhysicsEntity):
         current_val = self.stats[stat_name]
         new_val = current_val + value
 
-        for stat_name, bound in self.stat_bounds.items():
-            min_bound, max_bound = bound
+        if stat_name in self.stat_bounds:
+            min_bound, max_bound = self.stat_bounds[stat_name]
             if min_bound is not None:
                 new_val = max(min_bound, new_val)
             if max_bound is not None:
                 new_val = min(max_bound, new_val)
-            self.stats[stat_name] = new_val
+        self.stats[stat_name] = new_val
 
     def take_damage(self, damage: float):
-        current_health = self.stats["health"]
-        low_bound, high_bound = self.stat_bounds["health"]
-        new_val = min(max(low_bound, current_health - abs(damage)), high_bound)
-        self.stats["health"] = new_val
+        self.modify_stat("health", -(abs(damage)))
 
     def set_attack_size(self, offsets: TAttackSizes):
         self.attack_sizes = offsets
@@ -179,6 +176,12 @@ class Player(PhysicsEntity):
             self.transition_to("attack")
             self.is_attacking = True
 
+    def apply_damage_to_target(self, target: PhysicsEntity):
+        damage = self.stats["damage"]
+        if self.is_dashing:
+            damage += self.skills["dash"].effects.get("damage", 0)
+        target.take_damage(damage)
+
     def dash(self):
         if (
             not self.current_state.name == "wallslide"
@@ -192,7 +195,9 @@ class Player(PhysicsEntity):
 
     def check_and_consume(self, skill_name):
         if self.skills[skill_name].can_use(self):
-            self.skills[skill_name].apply(self)
+            effects = self.skills[skill_name].apply(self)
+            for stat, value in effects.items():
+                self.modify_stat(stat, value)
 
             pm = self.game.particle_manager
             pos = self.hitbox().center

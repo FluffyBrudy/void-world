@@ -16,11 +16,9 @@ class Skill:
         can_afford = all(entity.stats.get(s, 0) >= v for s, v in self.costs.items())
         return can_afford and self.cooldown_timer.has_reached_interval()
 
-    def apply(self, entity: "BaseEntity"):
+    def apply(self, entity: "BaseEntity") -> dict[str, float]:
         for stat, value in self.costs.items():
             entity.modify_stat(stat, -value)
 
-        for stat, value in self.effects.items():
-            entity.modify_stat(stat, value)
-
         self.cooldown_timer.reset_to_now()
+        return self.effects

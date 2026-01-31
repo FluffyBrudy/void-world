@@ -36,7 +36,7 @@ def _base_collision(player: "Player", entity: "Mushroom | Bat"):
     if player.attack_hitbox().colliderect(entity.hitbox()):
         if player.is_attacking and entity.hit_timer.has_reached_interval():
             entity.transition_to("hit")
-            entity.take_damage(player.stats["damage"])
+            player.apply_damage_to_target(entity)
         elif (
             state == "attack"
             and player.hit_timer.has_reached_interval()
