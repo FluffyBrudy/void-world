@@ -136,6 +136,15 @@ class Game:
                 0.2,
                 False,
             ),
+            "player/skillcast": Animation(
+                load_images(
+                    player_path / "idle",
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, (41, 43, 34, 38)),
+                ),
+                0.5,
+                False,
+            ),
             "bat/fly": Animation(
                 load_images(
                     ASSETS_PATH / "enemies" / "bat" / "fly",

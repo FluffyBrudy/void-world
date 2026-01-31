@@ -27,3 +27,4 @@ class ParticleManager:
             if not particle.update(dt):
                 particle.render(surface, offset)
                 new_particles.add(particle)
+        self.particles = new_particles

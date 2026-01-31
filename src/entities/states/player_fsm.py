@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Optional
+
 from entities.states.base_fsm import State
 
 if TYPE_CHECKING:
@@ -168,4 +169,23 @@ class HitState(State["Player"]):
             if entity.grounded():
                 return "idle"
             return "jump"
+        return None
+
+
+class SkillCastState(State["Player"]):
+    def __init__(self):
+        super().__init__("skillcast")
+
+    def enter(self, entity: "Player") -> None:
+        entity.velocity *= 0
+
+    def update(self, entity: "Player", **kwargs) -> None:
+        entity.velocity.x *= 0
+
+    def can_transition(self, entity: "Player") -> Optional[str]:
+        if entity.animation.has_animation_end():
+            if entity.animation.has_animation_end():
+                if entity.grounded():
+                    return "idle"
+                return "jump"
         return None

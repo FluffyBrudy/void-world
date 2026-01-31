@@ -81,6 +81,8 @@ class BaseEntity(ABC):
     @abstractmethod
     def grounded(self) -> bool: ...
 
+    def modify_stat(self, stat_name: str, value: float): ...
+
     def set_state(self, new_state: str):
         if self.current_state and new_state != self.current_state.name:
             self.current_state = self.states[new_state]
@@ -163,3 +165,6 @@ class BaseEntity(ABC):
         if len(killable) > 0:
             for entity in killable:
                 entity.remove()
+
+    def get_visual_correction(self):
+        return (0.0, 0.0)

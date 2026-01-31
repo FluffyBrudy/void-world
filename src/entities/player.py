@@ -1,5 +1,5 @@
 from math import pi
-from random import uniform
+from random import randint, uniform
 from typing import Dict, Literal, Tuple, override
 
 import pygame
@@ -20,10 +20,12 @@ from entities.states.player_fsm import (
     IdleTurnState,
     JumpState,
     RunState,
+    SkillCastState,
     SlideState,
 )
 from lib.skill import Skill
-from particle.particles import coned_particles, radial_particles, tail_circle_particles
+from logger import logger
+from particle.particles import coned_particles
 from ttypes.index_type import TPosType
 from utils.timer import Timer
 
@@ -49,6 +51,7 @@ class Player(PhysicsEntity):
             "fall": FallState(),
             "wallslide": SlideState(),
             "hit": HitState(),
+            "skillcast": SkillCastState(),
         }
         super().__init__("player", pos, size, states, offset)
         self.movement_start_timer = Timer(200)
@@ -60,14 +63,47 @@ class Player(PhysicsEntity):
         self.dash_timer = Timer(2000, True)
         self.hit_timer = Timer(2000, True)
 
-        self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.5, "mana_regain": 0.001}
-        self.skills: Dict[Literal["dash", "heal"], Skill] = {
-            "dash": Skill(mana_cost=0.3, cooldown=self.dash_timer.interval + 1000, damage=0.1, health_regain=0.0),
-            "heal": Skill(mana_cost=1, cooldown=15000, damage=0, health_regain=0.1),
+        self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.5, "mana_regain": 0.001, "shield": 0.0}
+        self.stat_bounds = {
+            "health": (0.0, 1.0),
+            "mana": (0.0, 1.0),
+            "shield": (0.0, None),
+            "damage": (0.0, None),
+        }
+        self.skills: Dict[str, Skill] = {
+            "dash": Skill(
+                costs={"mana": 0.3},
+                effects={"damage": 0.1},
+                cooldown=self.dash_timer.interval + 1000,
+            ),
+            "heal": Skill(
+                costs={"mana": 0.1},
+                effects={"health": 0.1, "shield": 0.05},
+                cooldown=1000,
+            ),
         }
 
+    def modify_stat(self, stat_name: str, value: float):
+        if stat_name not in self.stats:
+            logger.error(f"{stat_name} doesnt exist on stats")
+            return
+
+        current_val = self.stats[stat_name]
+        new_val = current_val + value
+
+        for stat_name, bound in self.stat_bounds.items():
+            min_bound, max_bound = bound
+            if min_bound is not None:
+                new_val = max(min_bound, new_val)
+            if max_bound is not None:
+                new_val = min(max_bound, new_val)
+            self.stats[stat_name] = new_val
+
     def take_damage(self, damage: float):
-        self.stats["health"] -= damage
+        current_health = self.stats["health"]
+        low_bound, high_bound = self.stat_bounds["health"]
+        new_val = min(max(low_bound, current_health - abs(damage)), high_bound)
+        self.stats["health"] = new_val
 
     def set_attack_size(self, offsets: TAttackSizes):
         self.attack_sizes = offsets
@@ -82,7 +118,7 @@ class Player(PhysicsEntity):
         return pygame.Rect(offset_x, hbox.top, attack_w, attack_h)
 
     def input(self):
-        if self.is_dashing or self.get_state() == "hit":
+        if self.is_dashing or self.get_state() == "hit" or self.get_state() == "skillcast":
             return
 
         keys = pygame.key.get_pressed()
@@ -152,11 +188,26 @@ class Player(PhysicsEntity):
         ):
             self.is_dashing = True
             self.dash_timer.reset_to_now()
-            self.skills["dash"].consume(self)
+            self.skills["dash"].apply(self)
 
     def check_and_consume(self, skill_name):
         if self.skills[skill_name].can_use(self):
-            self.skills[skill_name].consume(self)
+            self.skills[skill_name].apply(self)
+
+            pm = self.game.particle_manager
+            pos = self.hitbox().center
+            n = 5
+            self.transition_to("skillcast")
+            coned_particles(
+                pos=pos,
+                base_angles=tuple([-pi / 2 + (2 * i / (n - 1) - 1) * (pi / 5) for i in range(n)]),
+                group=pm,
+                filled=True,
+                color=(0, 255, 255),
+                radius=12,
+                speed_range=(3.0, 3.0),
+                reduce_factor=1,
+            )
 
     def handle_movement(self, dt: float):
         frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
@@ -172,17 +223,34 @@ class Player(PhysicsEntity):
             return
 
         direction = -1 if self.flipped else 1
-        self.velocity.x = 15 * direction  # velocity requires direction
-        self.velocity.y = 0  # otherwise it will have trajectory path
+        self.velocity.x = 15 * direction
+        self.velocity.y = 0
 
         if self.dash_timer.has_reached(0.15) or (
             (self.contact_sides["left"] and self.flipped) or (self.contact_sides["right"] and not self.flipped)
         ):
             self.is_dashing = False
-            self.velocity.x = 0  # because if x-comonent of velocity is not resett it keeps dashing
+            self.velocity.x = 0
+
         pm = self.game.particle_manager
         pos = self.hitbox().center
-        tail_circle_particles(pos, (-pi / 2, 0, pi / 2), pm, color=(0, 255, 255))
+
+        base_angles = (
+            tuple(uniform(*PARTICLE_DIR_LEFT) for _ in range(5))
+            if self.flipped
+            else tuple(uniform(*PARTICLE_DIR_RIGHT) for _ in range(5))
+        )
+
+        coned_particles(
+            pos=pos,
+            base_angles=base_angles,
+            group=pm,
+            filled=True,
+            color=(0, 255, 255),
+            radius=randint(6, 12),
+            speed_range=(3, 5),
+            reduce_factor=0.1,
+        )
 
     def manage_stats(self):
         if self.stats["mana"] < 1:

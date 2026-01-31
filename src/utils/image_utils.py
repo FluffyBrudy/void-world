@@ -1,9 +1,10 @@
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple, Union, Unpack
+from typing import Dict, Sequence, Tuple, Union, Unpack
 
 import pygame
+from pytmx.util_pygame import List
 
 from logger import logger
 from ttypes.index_type import ImageLoadOptions

@@ -7,16 +7,20 @@ if TYPE_CHECKING:
 
 
 class Skill:
-    def __init__(self, *, mana_cost: float, cooldown: float, damage: float = 0.0, health_regain: float = 0.0) -> None:
-        self.mana_cost = mana_cost
-        self.damage = damage
-        self.health_regain = health_regain
+    def __init__(self, *, costs: dict[str, float], effects: dict[str, float], cooldown: float) -> None:
+        self.costs = costs
+        self.effects = effects
         self.cooldown_timer = Timer(cooldown, stale_init=True)
-        self.active = True
 
-    def can_use(self, entity: "BaseEntity"):
-        return entity.stats["mana"] >= self.mana_cost and self.cooldown_timer.has_reached_interval()
+    def can_use(self, entity: "BaseEntity") -> bool:
+        can_afford = all(entity.stats.get(s, 0) >= v for s, v in self.costs.items())
+        return can_afford and self.cooldown_timer.has_reached_interval()
 
-    def consume(self, entity: "BaseEntity"):
-        entity.stats["mana"] = max(0, entity.stats["mana"] - self.mana_cost)
+    def apply(self, entity: "BaseEntity"):
+        for stat, value in self.costs.items():
+            entity.modify_stat(stat, -value)
+
+        for stat, value in self.effects.items():
+            entity.modify_stat(stat, value)
+
         self.cooldown_timer.reset_to_now()
