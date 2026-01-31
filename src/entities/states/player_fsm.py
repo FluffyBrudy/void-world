@@ -176,11 +176,9 @@ class SkillCastState(State["Player"]):
     def __init__(self):
         super().__init__("skillcast")
 
-    def enter(self, entity: "Player") -> None:
-        entity.velocity *= 0
-
     def update(self, entity: "Player", **kwargs) -> None:
         entity.velocity.x *= 0
+        entity.velocity.y -= 0.1
 
     def can_transition(self, entity: "Player") -> Optional[str]:
         if entity.animation.has_animation_end():

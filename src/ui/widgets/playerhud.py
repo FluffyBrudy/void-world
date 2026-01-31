@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from pygame.surface import Surface
 
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH
 from ttypes.index_type import UIOptions
 from ui.base.uibase import UIBase
 from ui.elements.progressbar import ProgressBarUI
@@ -25,14 +26,16 @@ SKILLS_DEFAULT_UIOPTIONS: UIOptions = {
     "padding_y": 4,
 }
 HUD_MAIN_UIOPTIONS: UIOptions = {
-    "background": (0, 0, 0, 0),
-    "border_color": (255, 255, 255, 0),
-    "border_width": 0,
-    "border_radius": 0,
-    "margin_x": 20,
-    "margin_y": 20,
-    "padding_x": 10,
-    "padding_y": 10,
+    "background": (155, 193, 217, 200),
+    "border_color": (255, 255, 255, 255),
+    "border_width": 5,
+    "border_radius": 10,
+    "margin_x": int((SCREEN_WIDTH - SCREEN_WIDTH * 0.4) // 2),
+    "margin_y": SCREEN_HEIGHT - 2 * (SCREEN_HEIGHT // 10),
+    "padding_x": 5,
+    "padding_y": 5,
+    "width": int(SCREEN_WIDTH * 0.4),
+    "height": SCREEN_HEIGHT // 10,
 }
 
 
@@ -42,32 +45,64 @@ class PlayerHUD(UIBase):
     def __init__(self, player: "Player") -> None:
         super().__init__(HUD_MAIN_UIOPTIONS)
 
+        HUD_PAD_X = 10
+        HUD_PAD_Y = 8
+        BAR_HEIGHT = 24
+        BAR_SPACING = 6
+        SKILL_SIZE = 56
+        SKILL_SPACING = 8
+
+        content_w = self.box_model["content_width"]
+        content_h = self.box_model["content_height"]
+
+        bar_width = int(content_w * 0.45)
+
+        self.healthbar = ProgressBarUI(
+            width=bar_width,
+            height=BAR_HEIGHT,
+            margin_x=HUD_PAD_X,
+            margin_y=HUD_PAD_Y,
+            fill_color="lime",
+        )
+
+        self.manabar = ProgressBarUI(
+            width=bar_width,
+            height=BAR_HEIGHT,
+            margin_x=HUD_PAD_X,
+            margin_y=HUD_PAD_Y + BAR_HEIGHT + BAR_SPACING,
+            fill_color="skyblue",
+        )
+
+        skills_y = content_h // 2 - SKILL_SIZE // 2
+        skills_start_x = content_w - HUD_PAD_X - (SKILL_SIZE * 2) - SKILL_SPACING
+
         self.dash_cooldown_ui = CooldownOverlay(
             skill=player.skills["dash"],
             icon=self.game.icons["player/skills"]["dash"],
-            size=78,
-            **SKILLS_DEFAULT_UIOPTIONS,
+            size=SKILL_SIZE,
+            **{**SKILLS_DEFAULT_UIOPTIONS, "margin_x": skills_start_x, "margin_y": skills_y},
         )
+
         self.heal_cooldown_ui = CooldownOverlay(
             skill=player.skills["heal"],
             icon=self.game.icons["player/skills"]["heal"],
-            size=78,
-            **{**SKILLS_DEFAULT_UIOPTIONS, "margin_y": self.dash_cooldown_ui.box_model["offset_y"]},
+            size=SKILL_SIZE,
+            **{
+                **SKILLS_DEFAULT_UIOPTIONS,
+                "margin_x": skills_start_x + SKILL_SIZE + SKILL_SPACING,
+                "margin_y": skills_y,
+            },
         )
 
-        self.healthbar = ProgressBarUI(fill_color="lime")  # type: ignore
-        self.healthbar.set_progress(player.stats["health"])
-        self.manabar = ProgressBarUI(fill_color="skyblue", margin_y=int(self.healthbar.fullsize[1] * 1.4))  # type: ignore
-        self.manabar.set_progress(player.stats["mana"])
+        self.add_plugin(self.healthbar.render)
+        self.add_plugin(self.manabar.render)
+        self.add_plugin(self.dash_cooldown_ui.render)
+        self.add_plugin(self.heal_cooldown_ui.render)
 
         self.player = player
 
     def render(self, screen: Surface):
-        # self.dash_cooldown_ui.render(screen)
-        self.heal_cooldown_ui.render(screen)
-        self.manabar.render(screen)
-        self.healthbar.render(screen)
-        return super().render(screen)
+        super().render(screen)
 
     def update(self):
         self.healthbar.set_progress(self.player.stats["health"])

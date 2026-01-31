@@ -40,23 +40,28 @@ class CooldownOverlay(UIBase):
             self.scalar = (math.sqrt(2 * (r - b) ** 2) + b) / r
 
         self.overlay_parent = Surface((content_w, content_h), SRCALPHA)
-        self.renderable_plugins.append(self.generate_overlay_surf)
-        self.renderable_plugins.append(self.display_icon)
+        self.add_plugin(self.generate_overlay_surf)
+        self.add_plugin(self.display_icon)
 
         if isinstance(icon, Surface):
-            print(content_w, content_h, icon.size)
             scale = content_w / icon.width, content_h / icon.height
             self.icon = transform.scale_by(icon, scale)
 
     def display_icon(self, surface: Surface):
         icon: Surface | None = getattr(self, "icon", None)
+        if icon is None:
+            return
 
-        if icon is not None:
-            if not self.timer.has_reached_interval():
-                icon.set_alpha(150)
-            elif icon.get_alpha() != 255:
-                icon.set_alpha(255)
-            surface.blit(icon)
+        center_x = self.box_model["content_width"] // 2
+        center_y = self.box_model["content_height"] // 2
+
+        rect = icon.get_rect(center=(self.box_model["left"] + center_x, self.box_model["top"] + center_y))
+
+        if not self.timer.has_reached_interval():
+            icon.set_alpha(150)
+        elif icon.get_alpha() != 255:
+            icon.set_alpha(255)
+        surface.blit(icon, rect.topleft)
 
     def generate_overlay_surf(self, surface: Surface):
         cross_intrvl = self.timer.has_reached_interval()
