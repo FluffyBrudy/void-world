@@ -1,6 +1,6 @@
 from math import pi
 from random import randint, uniform
-from typing import Dict, Literal, Tuple, override
+from typing import TYPE_CHECKING, Dict, Tuple, override
 
 import pygame
 
@@ -28,6 +28,10 @@ from logger import logger
 from particle.particles import coned_particles
 from ttypes.index_type import TPosType
 from utils.timer import Timer
+
+if TYPE_CHECKING:
+    from entities.enemy_entity import Enemy
+
 
 TAttackSizes = Dict[str, Tuple[int, int]]
 
@@ -176,7 +180,7 @@ class Player(PhysicsEntity):
             self.transition_to("attack")
             self.is_attacking = True
 
-    def apply_damage_to_target(self, target: PhysicsEntity):
+    def apply_damage_to_target(self, target: "Enemy"):
         damage = self.stats["damage"]
         if self.is_dashing:
             damage += self.skills["dash"].effects.get("damage", 0)
