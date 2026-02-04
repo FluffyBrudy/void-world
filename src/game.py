@@ -14,12 +14,11 @@ from constants import (
     SCREEN_WIDTH,
 )
 from entities.base_entity import BaseEntity
-from entities.enemy_entity import Bat, Enemy, Mushroom
+from entities.enemy_entity import Bat, Enemy, FireWorm, Mushroom
 from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from particle.particle_manager import ParticleManager
-from particle.particles import TwinWave
 from pydebug import Debug
 from ttypes.index_type import ImageLoadOptions
 from ui.widgets.overlay import CooldownOverlay
@@ -228,6 +227,46 @@ class Game:
                 animation_speed=0.2,
                 loop=False,
             ),
+            "fireworm/idle": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "fireworm" / "idle.png",
+                    (90, 90),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "fireworm/death": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "fireworm" / "death.png",
+                    (90, 90),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "fireworm/hit": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "fireworm" / "hit.png",
+                    (90, 90),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "fireworm/run": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "fireworm" / "run.png",
+                    (90, 90),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
+            "fireworm/attack": Animation(
+                load_spritesheet(
+                    ASSETS_PATH / "enemies" / "fireworm" / "attack.png",
+                    (90, 90),
+                    scale_ratio_or_size=PLAYER_SCALE,
+                    trim_transparent_pixel=(True, None),
+                )
+            ),
         }
 
         skills_default_options: ImageLoadOptions = {"trim_transparent_pixel": (True, None)}
@@ -263,8 +302,11 @@ class Game:
 
         bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
         mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20))
+        fireworm = FireWorm((1200, 0), self.assets["fireworm/idle"].get_frame().size, (0, -20))
+
         bat.set_target(self.player)
         mushroom.set_target(self.player)
+        fireworm.set_target(self.player)
 
         self.player_hud = PlayerHUD(self.player)
 

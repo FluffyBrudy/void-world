@@ -1,17 +1,18 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Sequence, Set, Tuple, TypedDict, cast
-from pygame import Rect, Surface, Vector2
+
 import pygame
+from pygame import Rect, Surface, Vector2
 from pygame.typing import IntPoint
 from pytmx import TiledMap, TiledObjectGroup, TiledTileLayer, TiledTileset, load_pygame
-from lib.tile import Tile
+
 from constants import (
     GRID_NEIGHBOURS_9,
     MAP_PATH,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
 )
-
+from lib.tile import Tile
 
 if TYPE_CHECKING:
     from game import Game
@@ -65,6 +66,21 @@ class Tilemap:
             rect = pygame.Rect(tile_x * tw, tile_y * th, tw, th)
             rects.append(rect)
 
+        return rects
+
+    def get_physics_rects(self, area: Rect) -> List[Rect]:
+        rects: List[Rect] = []
+        tw, th = self.tilewidth, self.tileheight
+
+        start_x = int(area.left // tw) - 1
+        end_x = int(area.right // tw) + 1
+        start_y = int(area.top // th) - 1
+        end_y = int(area.bottom // th) + 1
+
+        for y in range(start_y, end_y + 1):
+            for x in range(start_x, end_x + 1):
+                if (x, y) in self.grid_tiles:
+                    rects.append(pygame.Rect(x * tw, y * th, tw, th))
         return rects
 
     def is_solid_tile(self, pos: IntPoint):

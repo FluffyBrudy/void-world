@@ -42,7 +42,7 @@ class PhysicsEntity(BaseEntity):
         return self.contact_sides["down"]
 
     def collision_horizontal(self):
-        tiles = self.game.tilemap.physics_rect_around(self.pos)
+        tiles = self.game.tilemap.get_physics_rects(self.hitbox())
         hitbox = self.hitbox()
 
         for tile in tiles:
@@ -58,7 +58,7 @@ class PhysicsEntity(BaseEntity):
         self.velocity.x = 0
 
     def collision_vertical(self):
-        tiles = self.game.tilemap.physics_rect_around(self.pos)
+        tiles = self.game.tilemap.get_physics_rects(self.hitbox())
         hitbox = self.hitbox()
 
         for tile in tiles:
@@ -74,7 +74,7 @@ class PhysicsEntity(BaseEntity):
         self.velocity.y = 0
 
     def identify_contact_sides(self):
-        tiles_rect_around = self.game.tilemap.physics_rect_around(self.pos)
+        tiles_rect_around = self.game.tilemap.get_physics_rects(self.hitbox())
 
         hitbox = self.hitbox()
         self.contact_sides["left"] = hitbox.move(-1, 0).collidelist(tiles_rect_around) >= 0

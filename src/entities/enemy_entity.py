@@ -173,3 +173,44 @@ class Mushroom(Enemy["Mushroom"], GroundEntity):
     def update(self, dt: float):
         self.healthbar.update()
         return super().update(dt)
+
+
+class FireWorm(Enemy["FireWorm"], GroundEntity):
+    def __init__(
+        self,
+        pos: Tuple[int, int],
+        size: Tuple[int, int],
+        /,
+        offset: Tuple[int, int] = (0, 0),
+        hit_timer_ms: int = 2000,
+        attack_timer_ms: int = 1700,
+        chase_radius: int = 400,
+    ):
+        states = {
+            "idle": mus_fsm.IdleState(),
+            "attack": mus_fsm.AttackState(),
+            "death": mus_fsm.DeathState(),
+            "hit": mus_fsm.HitState(),
+            "run": mus_fsm.RunState(),
+        }
+
+        GroundEntity.__init__(self, "fireworm", pos, size, states, offset)
+        Enemy.__init__(
+            self,
+            etype="fireworm",
+            hit_timer_ms=hit_timer_ms,
+            attack_timer_ms=attack_timer_ms,
+            chase_radius=chase_radius,
+        )
+
+    def can_chase(self, entity: "BaseEntity"):
+        distance_y = abs(entity.pos.y - self.pos.y)
+        distance_x = entity.pos.x - self.pos.x
+        return distance_y <= self.size[1] and abs(distance_x) <= self.chase_radius
+
+    def can_attack(self, entity: "BaseEntity") -> bool:
+        return self.rect().colliderect(entity.hitbox())
+
+    def update(self, dt: float):
+        self.healthbar.update()
+        return super().update(dt)
