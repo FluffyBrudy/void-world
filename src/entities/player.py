@@ -25,7 +25,7 @@ from entities.states.player_fsm import (
 )
 from lib.skill import Skill
 from logger import logger
-from particle.particles import coned_particles
+from particle.particles import TwinWave, coned_particles
 from ttypes.index_type import TPosType
 from utils.timer import Timer
 
@@ -86,6 +86,16 @@ class Player(PhysicsEntity):
                 cooldown=1000,
             ),
         }
+
+        self.twinwave = TwinWave(
+            start_pos=self.hitbox().center,
+            radius=10,
+            wavelength=2 * self.size[1],
+            amplitude=int(2 * self.size[0] * 0.7),
+            speed=50,
+            color=(0, 255, 255),
+            num_crossings=5,
+        )
 
     def modify_stat(self, stat_name: str, value: float):
         if stat_name not in self.stats:
@@ -269,6 +279,7 @@ class Player(PhysicsEntity):
 
     @override
     def update(self, dt: float):
+        self.twinwave.update(dt, self.rect().center)
         self.input()
         if self.is_attacking:
             self.velocity.x = 0
@@ -286,6 +297,8 @@ class Player(PhysicsEntity):
         super().manage_state()
 
     def render(self, surface: pygame.Surface, offset: TPosType):
+        vis_fix = 1 if self.flipped else 0
+        self.twinwave.render(surface, (offset[0] + vis_fix * 25, offset[1]))
         if not self.is_dashing:
             frame, pos = self.get_renderable(offset)
             frame_copy = frame.copy()

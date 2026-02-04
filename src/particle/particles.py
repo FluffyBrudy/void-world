@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
-from math import cos, pi, sin
+from math import cos, pi, radians, sin
 from random import randint, random, uniform
 from typing import TYPE_CHECKING, Sequence, Tuple
 
 from pygame import Surface, Vector2
+from pygame.constants import SRCALPHA
 from pygame.draw import circle as draw_circle
 from pygame.typing import ColorLike
 
 from constants import BASE_SPEED
+from pydebug import pgdebug
 from ttypes.index_type import TPosType
 
 if TYPE_CHECKING:
@@ -57,6 +59,60 @@ class DotParticle(Particle):
 
     def render(self, surface: Surface, offset: Tuple[int, int] | Vector2):
         draw_circle(surface, self.color, self.pos - offset, self.radius, self.fill_width)
+
+
+class TwinWave:
+    reset_limit = pi * 50
+
+    def __init__(
+        self,
+        start_pos: TPosType,
+        radius: float,
+        amplitude: float,
+        wavelength: float,
+        speed: float,
+        color: Tuple[int, int, int],
+        num_crossings: int,
+    ):
+        self.base_pos = Vector2(start_pos)
+        self.radius = radius
+        self.amplitude = amplitude
+        self.wavelength = wavelength
+        self.speed = speed
+        self.num_crossings = num_crossings
+        self.color = color[0:3]
+
+        self.__omega = (2 * pi * self.speed) / self.wavelength
+        self.__wavelength_junction = self.wavelength * 0.5
+        self.__center = (self.amplitude, self.__wavelength_junction)
+        self.time_tracker = 0
+
+        self.__mask_surface = Surface((2 * self.amplitude + 2 * radius, self.wavelength + 2 * radius), SRCALPHA)
+
+    def update(self, dt: float, current_center: TPosType):
+        self.base_pos.update(current_center)
+        self.time_tracker += self.__omega * dt
+        if self.time_tracker > self.reset_limit:
+            self.time_tracker = 0
+
+    def render(self, surface: Surface, camera_offset: TPosType):
+        self.__mask_surface.fill((0, 0, 0, 0))
+
+        t = self.time_tracker
+        angle_y = t
+        angle_x = t * self.num_crossings
+
+        off_x = sin(angle_x) * self.amplitude
+        off_y = cos(angle_y) * self.__wavelength_junction
+
+        alpha = int(abs(off_y) / self.__wavelength_junction * 255)
+        color = (*self.color, alpha)
+
+        masked_surf = self.__mask_surface
+        mw, mh = masked_surf.size
+        draw_circle(masked_surf, (color), (off_x + mw // 2, off_y + mh // 2), self.radius)
+        draw_circle(masked_surf, (color), (-off_x + mw // 2, off_y + mh // 2), self.radius)
+        surface.blit(masked_surf, (self.base_pos - self.__center) - camera_offset)
 
 
 def coned_particles(

@@ -19,6 +19,7 @@ from entities.player import Player
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
 from particle.particle_manager import ParticleManager
+from particle.particles import TwinWave
 from pydebug import Debug
 from ttypes.index_type import ImageLoadOptions
 from ui.widgets.overlay import CooldownOverlay
@@ -242,7 +243,7 @@ class Game:
         self.level = 0
 
         player_base_size = self.assets["player/idle"].get_frame().size
-        self.player = Player((400, -400), player_base_size, (0, 0))
+        self.player = Player((2000, 200), player_base_size, (0, 0))
         self.player.set_attack_size(
             {
                 "attack": (int(32 * PLAYER_SCALE), int(43 * PLAYER_SCALE)),
@@ -315,13 +316,18 @@ class Game:
     def render_all(self):
         self.screen.fill((50, 50, 100))
         self.parallaxbg.render()
-        self.player.render(self.screen, self.scroll)
+
         BaseEntity.render_all(self.screen, self.dt, self.scroll)
+        self.player.render(self.screen, self.scroll)
         self.tilemap.render()
+
         Debug.draw_all(self.screen)
+
         self.particle_manager.render(self.screen, self.dt)
+
         self.player_hud.update()
         self.player_hud.render(self.screen)
+
         pygame.display.flip()
 
 
