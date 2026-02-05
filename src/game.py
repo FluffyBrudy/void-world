@@ -4,6 +4,7 @@ import pygame
 
 from collision.collision_resolution import (
     player_bat_collision,
+    player_firworm_collision,
     player_mushroom_collision,
 )
 from constants import (
@@ -233,7 +234,9 @@ class Game:
                     (90, 90),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                0.2,
+                False,
             ),
             "fireworm/death": Animation(
                 load_spritesheet(
@@ -241,7 +244,9 @@ class Game:
                     (90, 90),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                0.2,
+                False,
             ),
             "fireworm/hit": Animation(
                 load_spritesheet(
@@ -249,7 +254,9 @@ class Game:
                     (90, 90),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                0.2,
+                False,
             ),
             "fireworm/run": Animation(
                 load_spritesheet(
@@ -257,7 +264,9 @@ class Game:
                     (90, 90),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                0.2,
+                False,
             ),
             "fireworm/attack": Animation(
                 load_spritesheet(
@@ -265,7 +274,9 @@ class Game:
                     (90, 90),
                     scale_ratio_or_size=PLAYER_SCALE,
                     trim_transparent_pixel=(True, None),
-                )
+                ),
+                0.2,
+                False,
             ),
         }
 
@@ -302,10 +313,10 @@ class Game:
 
         bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
         mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20))
-        fireworm = FireWorm((1200, 0), self.assets["fireworm/idle"].get_frame().size, (0, -20))
+        fireworm = FireWorm((1200, 0), self.assets["fireworm/idle"].get_frame().size, (0, -10))
 
         bat.set_target(self.player)
-        mushroom.set_target(self.player)
+        # mushroom.set_target(self.player)
         fireworm.set_target(self.player)
 
         self.player_hud = PlayerHUD(self.player)
@@ -346,6 +357,8 @@ class Game:
             player_bat_collision(player, bat)
         for mushroom in Mushroom.get_by_group():
             player_mushroom_collision(player, mushroom)
+        for fireworm in FireWorm.get_by_group():
+            player_firworm_collision(player, fireworm)
 
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0

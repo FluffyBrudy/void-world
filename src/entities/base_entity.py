@@ -154,13 +154,13 @@ class BaseEntity(ABC):
 
     @classmethod
     def render_all(cls, screen: Surface, dt: float, offset: TPosType):
-        killable = set()
-        for bat in cls.__instances:
-            if bat.alive:
-                bat.update(dt)
-                bat.render(screen, offset)
+        killable: Set["BaseEntity"] = set()
+        for entity in cls.__instances:
+            if entity.alive:
+                entity.update(dt)
+                entity.render(screen, offset)
             else:
-                killable.add(bat)
+                killable.add(entity)
 
         if len(killable) > 0:
             for entity in killable:

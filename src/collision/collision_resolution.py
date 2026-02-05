@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from entities.enemy_entity import Bat, Mushroom
+    from entities.enemy_entity import Bat, FireWorm, Mushroom
     from entities.player import Player
 
 
@@ -13,7 +13,11 @@ def player_mushroom_collision(player: "Player", mushroom: "Mushroom", /):
     _base_collision(player, mushroom)
 
 
-def _attack_phase(entity: "Player |  Mushroom | Bat") -> Literal["startup", "active", "finish"]:
+def player_firworm_collision(player: "Player", fireworm: "FireWorm"):
+    _base_collision(player, fireworm)
+
+
+def _attack_phase(entity: "Player |  Mushroom | Bat | FireWorm") -> Literal["startup", "active", "finish"]:
     state = entity.current_state
     frame_index = entity.animation.frame_index
 
@@ -27,7 +31,7 @@ def _attack_phase(entity: "Player |  Mushroom | Bat") -> Literal["startup", "act
     return "finish"
 
 
-def _base_collision(player: "Player", entity: "Mushroom | Bat"):
+def _base_collision(player: "Player", entity: "Mushroom | Bat | FireWorm"):
     if not (player.get_state() == "attack" or entity.get_state() == "attack"):
         return
 

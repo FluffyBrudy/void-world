@@ -8,6 +8,7 @@ import pygame
 
 from entities.base_entity import BaseEntity
 from entities.states.base_fsm import State
+from pydebug import pgdebug
 
 T4Directions = Literal["up", "down", "left", "right"]
 TContactSides = Dict[T4Directions, bool]
@@ -67,6 +68,9 @@ class PhysicsEntity(BaseEntity):
                 break
 
     def __resolve_vertical_collision(self, hitbox: pygame.Rect, tile_rect: pygame.Rect):
+        if self.etype == "fireworm":
+            diff = round(tile_rect.top - hitbox.bottom) if self.velocity.y > 0 else (tile_rect.bottom - hitbox.top)
+            pgdebug(f"V-Snap: {diff} | VelY: {round(self.velocity.y)}")
         if self.velocity.y < 0:
             self.pos.y += tile_rect.bottom - hitbox.top
         elif self.velocity.y > 0:

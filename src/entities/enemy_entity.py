@@ -12,6 +12,7 @@ from entities.ground_entity import GroundEntity
 from entities.states import bat_fsm as bat_fsm
 from entities.states import mushroom_fsm as mus_fsm
 from entities.states.base_fsm import State
+from pydebug import pgdebug
 from ttypes.index_type import TPosType
 from ui.widgets.healthbar import HealthbarUI
 from utils.timer import Timer
@@ -212,5 +213,6 @@ class FireWorm(Enemy["FireWorm"], GroundEntity):
         return self.rect().colliderect(entity.hitbox())
 
     def update(self, dt: float):
+        pgdebug(self.get_state())
         self.healthbar.update()
         return super().update(dt)
