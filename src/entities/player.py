@@ -228,15 +228,6 @@ class Player(PhysicsEntity):
                 reduce_factor=1,
             )
 
-    def handle_movement(self, dt: float):
-        frame_movement_x = (self.velocity.x) * (BASE_SPEED * dt)
-        self.pos[0] += frame_movement_x
-        self.collision_horizontal()
-
-        self.velocity.y += GRAVITY * dt
-        self.pos[1] += self.velocity.y * dt
-        self.collision_vertical()
-
     def manage_dash(self):
         if not self.is_dashing:
             return

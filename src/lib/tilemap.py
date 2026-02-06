@@ -1,13 +1,11 @@
-from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Sequence, Set, Tuple, TypedDict, cast
+from typing import TYPE_CHECKING, Dict, List, Tuple, TypedDict
 
 import pygame
-from pygame import Rect, Surface, Vector2
+from pygame import Rect, Surface
 from pygame.typing import IntPoint
-from pytmx import TiledMap, TiledObjectGroup, TiledTileLayer, TiledTileset, load_pygame
+from pytmx import TiledMap, TiledObjectGroup, TiledTileLayer, load_pygame
 
 from constants import (
-    GRID_NEIGHBOURS_9,
     MAP_PATH,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,

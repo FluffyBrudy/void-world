@@ -1,18 +1,16 @@
 import math
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, Generic, Optional, Tuple, TypeVar, cast
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, cast
 
 from pygame import Vector2
 from pygame.surface import Surface
 from pytmx.pytmx import pygame
 
-from entities.air_entity import AirEntity
 from entities.base_entity import BaseEntity
-from entities.ground_entity import GroundEntity
+from entities.physics_entity import PhysicsEntity
 from entities.states import bat_fsm as bat_fsm
-from entities.states import mushroom_fsm as mus_fsm
+from entities.states import ground_enemy_fsm
 from entities.states.base_fsm import State
-from pydebug import pgdebug
 from ttypes.index_type import TPosType
 from ui.widgets.healthbar import HealthbarUI
 from utils.timer import Timer
@@ -20,22 +18,26 @@ from utils.timer import Timer
 if TYPE_CHECKING:
     from game import Game
 
-TEntity = TypeVar("TEntity", bound="BaseEntity")
 
-
-class Enemy(Generic[TEntity], ABC):
+class Enemy(PhysicsEntity, ABC):
     game: "Game" = None  # type: ignore
 
     def __init__(
         self,
         etype: str,
+        pos: Tuple[int, int],
+        size: Tuple[int, int],
+        states: Dict[str, State],
+        offset: Tuple[int, int] = (0, 0),
         hit_timer_ms: int = 0,
         attack_timer_ms: int = 0,
         chase_radius: int = 400,
     ) -> None:
-        self.target: Optional["BaseEntity"] = None
+        super().__init__(etype, pos, size, states, offset)
+
+        self.target: Optional[BaseEntity] = None
         self.chase_radius = chase_radius
-        self.stats = {"health": 1.0, "damage": 0.1}
+        self.stats.update({"health": 1.0, "damage": 0.1})
 
         hit_anim = self.game.assets[f"{etype}/hit"]
         attack_anim = self.game.assets[f"{etype}/attack"]
@@ -48,21 +50,23 @@ class Enemy(Generic[TEntity], ABC):
 
         self.healthbar = HealthbarUI(self, visibility_timer=self.hit_timer.interval, width=100, height=10)
 
-    def set_target(self, target: "BaseEntity"):
+    def set_target(self, target: BaseEntity):
         self.target = target
 
     def remove_target(self):
         self.target = None
 
     def is_target_vulnarable(self):
+        if not self.target:
+            return False
         hit_timer = cast(Optional[Timer], getattr(self.target, "hit_timer"))
         return hit_timer is not None and not hit_timer.has_reached_interval()
 
     @abstractmethod
-    def can_chase(self, entity: "BaseEntity") -> bool: ...
+    def can_chase(self, entity: BaseEntity) -> bool: ...
 
     @abstractmethod
-    def can_attack(self, entity: "BaseEntity") -> bool: ...
+    def can_attack(self, entity: BaseEntity) -> bool: ...
 
     def take_damage(self, amount: float) -> Optional[bool]:
         self.stats["health"] -= amount
@@ -70,9 +74,8 @@ class Enemy(Generic[TEntity], ABC):
         self.hit_timer.reset_to_now()
 
     def render(self, surface: Surface, offset: TPosType):
-        self_as_entity: BaseEntity = cast(BaseEntity, self)
         self.healthbar.render(surface, offset)
-        frame, pos = self_as_entity.get_renderable(offset)
+        frame, pos = self.get_renderable(offset)
 
         if not self.hit_timer.has_reached_interval():
             frame_cp = frame.copy()
@@ -86,7 +89,7 @@ class Enemy(Generic[TEntity], ABC):
             surface.blit(frame, pos)
 
 
-class Bat(Enemy["Bat"], AirEntity):
+class Bat(Enemy):
     def __init__(
         self,
         pos: Tuple[int, int],
@@ -105,10 +108,12 @@ class Bat(Enemy["Bat"], AirEntity):
             "hit": bat_fsm.HitState(),
         }
 
-        AirEntity.__init__(self, "bat", pos, size, states, offset)
-        Enemy.__init__(
-            self,
+        super().__init__(
             etype="bat",
+            pos=pos,
+            size=size,
+            states=states,
+            offset=offset,
             attack_timer_ms=hit_timer_ms,
             hit_timer_ms=attack_timer_ms,
             chase_radius=chase_radius,
@@ -122,11 +127,11 @@ class Bat(Enemy["Bat"], AirEntity):
 
         self.attack_radius = attack_radius or self.hitbox().w // 2
 
-    def can_chase(self, entity: "BaseEntity"):
+    def can_chase(self, entity: BaseEntity):
         distance = self.pos.distance_to(entity.pos)
         return distance <= self.chase_radius
 
-    def can_attack(self, entity: "BaseEntity"):
+    def can_attack(self, entity: BaseEntity):
         distance = self.pos.distance_to(entity.pos)
         return distance <= self.attack_radius
 
@@ -135,7 +140,17 @@ class Bat(Enemy["Bat"], AirEntity):
         return super().update(dt)
 
 
-class Mushroom(Enemy["Mushroom"], GroundEntity):
+def get_ground_enemy_states():
+    return {
+        "idle": ground_enemy_fsm.IdleState(),
+        "attack": ground_enemy_fsm.AttackState(),
+        "death": ground_enemy_fsm.DeathState(),
+        "hit": ground_enemy_fsm.HitState(),
+        "run": ground_enemy_fsm.RunState(),
+    }
+
+
+class Mushroom(Enemy):
     def __init__(
         self,
         pos: Tuple[int, int],
@@ -146,29 +161,24 @@ class Mushroom(Enemy["Mushroom"], GroundEntity):
         attack_timer_ms: int = 1700,
         chase_radius: int = 400,
     ):
-        states = {
-            "idle": mus_fsm.IdleState(),
-            "attack": mus_fsm.AttackState(),
-            "death": mus_fsm.DeathState(),
-            "hit": mus_fsm.HitState(),
-            "run": mus_fsm.RunState(),
-        }
-
-        GroundEntity.__init__(self, "mushroom", pos, size, states, offset)
-        Enemy.__init__(
-            self,
+        super().__init__(
             etype="mushroom",
+            pos=pos,
+            size=size,
+            states=get_ground_enemy_states(),
+            offset=offset,
             hit_timer_ms=hit_timer_ms,
             attack_timer_ms=attack_timer_ms,
             chase_radius=chase_radius,
         )
+        self.obey_gravity = True
 
-    def can_chase(self, entity: "BaseEntity"):
+    def can_chase(self, entity: BaseEntity):
         distance_y = abs(entity.pos.y - self.pos.y)
         distance_x = entity.pos.x - self.pos.x
         return distance_y <= self.size[1] and abs(distance_x) <= self.chase_radius
 
-    def can_attack(self, entity: "BaseEntity") -> bool:
+    def can_attack(self, entity: BaseEntity) -> bool:
         return self.rect().colliderect(entity.hitbox())
 
     def update(self, dt: float):
@@ -176,7 +186,7 @@ class Mushroom(Enemy["Mushroom"], GroundEntity):
         return super().update(dt)
 
 
-class FireWorm(Enemy["FireWorm"], GroundEntity):
+class FireWorm(Enemy):
     def __init__(
         self,
         pos: Tuple[int, int],
@@ -187,32 +197,26 @@ class FireWorm(Enemy["FireWorm"], GroundEntity):
         attack_timer_ms: int = 1700,
         chase_radius: int = 400,
     ):
-        states = {
-            "idle": mus_fsm.IdleState(),
-            "attack": mus_fsm.AttackState(),
-            "death": mus_fsm.DeathState(),
-            "hit": mus_fsm.HitState(),
-            "run": mus_fsm.RunState(),
-        }
-
-        GroundEntity.__init__(self, "fireworm", pos, size, states, offset)
-        Enemy.__init__(
-            self,
+        super().__init__(
             etype="fireworm",
+            pos=pos,
+            size=size,
+            states=get_ground_enemy_states(),
+            offset=offset,
             hit_timer_ms=hit_timer_ms,
             attack_timer_ms=attack_timer_ms,
             chase_radius=chase_radius,
         )
+        self.obey_gravity = True
 
-    def can_chase(self, entity: "BaseEntity"):
+    def can_chase(self, entity: BaseEntity):
         distance_y = abs(entity.pos.y - self.pos.y)
         distance_x = entity.pos.x - self.pos.x
         return distance_y <= self.size[1] and abs(distance_x) <= self.chase_radius
 
-    def can_attack(self, entity: "BaseEntity") -> bool:
+    def can_attack(self, entity: BaseEntity) -> bool:
         return self.rect().colliderect(entity.hitbox())
 
     def update(self, dt: float):
-        pgdebug(self.get_state())
         self.healthbar.update()
         return super().update(dt)

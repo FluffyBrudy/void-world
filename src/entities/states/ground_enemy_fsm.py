@@ -3,17 +3,17 @@ from typing import TYPE_CHECKING
 from entities.states.base_fsm import State
 
 if TYPE_CHECKING:
-    from entities.enemy_entity import Mushroom
+    from entities.enemy_entity import Enemy
 
 
-class IdleState(State["Mushroom"]):
+class IdleState(State["Enemy"]):
     def __init__(self):
         super().__init__("idle")
 
-    def enter(self, entity: "Mushroom"):
+    def enter(self, entity: "Enemy"):
         entity.velocity *= 0
 
-    def can_transition(self, entity: "Mushroom"):
+    def can_transition(self, entity: "Enemy"):
         if entity.target is None:
             return None
 
@@ -23,11 +23,11 @@ class IdleState(State["Mushroom"]):
         return None
 
 
-class RunState(State["Mushroom"]):
+class RunState(State["Enemy"]):
     def __init__(self):
         super().__init__("run")
 
-    def update(self, entity: "Mushroom", **kwargs):
+    def update(self, entity: "Enemy", **kwargs):
         if entity.target is None:
             return None
 
@@ -40,7 +40,7 @@ class RunState(State["Mushroom"]):
         entity.velocity.x = direction
         entity.flipped = distance_x < 0
 
-    def can_transition(self, entity: "Mushroom"):
+    def can_transition(self, entity: "Enemy"):
         if entity.target is None:
             return None
 
@@ -55,18 +55,18 @@ class RunState(State["Mushroom"]):
 
         return None
 
-    def exit(self, entity: "Mushroom") -> None:
+    def exit(self, entity: "Enemy") -> None:
         entity.velocity.x *= 0
 
 
-class AttackState(State["Mushroom"]):
+class AttackState(State["Enemy"]):
     def __init__(self):
         super().__init__("attack", 0, 0)
 
-    def enter(self, entity: "Mushroom"):
+    def enter(self, entity: "Enemy"):
         entity.velocity *= 0
 
-    def can_transition(self, entity: "Mushroom"):
+    def can_transition(self, entity: "Enemy"):
         if entity.target is None:
             return "idle"
 
@@ -76,14 +76,14 @@ class AttackState(State["Mushroom"]):
         return "idle"
 
 
-class HitState(State["Mushroom"]):
+class HitState(State["Enemy"]):
     def __init__(self):
         super().__init__("hit")
 
-    def enter(self, entity: "Mushroom"):
+    def enter(self, entity: "Enemy"):
         entity.velocity.x *= 0
 
-    def can_transition(self, entity: "Mushroom"):
+    def can_transition(self, entity: "Enemy"):
         if entity.stats["health"] <= 0.01:
             return "death"
 
@@ -96,15 +96,14 @@ class HitState(State["Mushroom"]):
         return "idle"
 
 
-class DeathState(State["Mushroom"]):
+class DeathState(State["Enemy"]):
     def __init__(self):
         super().__init__("Death")
 
-    def enter(self, entity: "Mushroom"):
+    def enter(self, entity: "Enemy"):
         entity.velocity *= 0
 
-    def can_transition(self, entity: "Mushroom"):
-        print("has,", entity.animation.has_animation_end())
+    def can_transition(self, entity: "Enemy"):
         if entity.animation.has_animation_end():
             entity.alive = False
         return None

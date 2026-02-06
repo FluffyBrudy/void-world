@@ -8,7 +8,6 @@ import pygame
 
 from entities.base_entity import BaseEntity
 from entities.states.base_fsm import State
-from pydebug import pgdebug
 
 T4Directions = Literal["up", "down", "left", "right"]
 TContactSides = Dict[T4Directions, bool]
@@ -73,6 +72,20 @@ class PhysicsEntity(BaseEntity):
         elif self.velocity.y > 0:
             self.pos.y += tile_rect.top - hitbox.bottom
         self.velocity.y = 0
+
+    def handle_movement(self, dt: float):
+        from constants import BASE_SPEED, GRAVITY
+
+        if self.obey_gravity:
+            self.pos.x += self.velocity.x * (BASE_SPEED * dt)
+            self.collision_horizontal()
+
+            self.velocity.y += GRAVITY * dt
+            self.pos.y += self.velocity.y * dt
+            self.collision_vertical()
+        else:
+            self.pos.x += self.velocity.x * dt
+            self.pos.y += self.velocity.y * dt
 
     def identify_contact_sides(self):
         tiles_rect_around = self.game.tilemap.get_physics_rects(self.hitbox())
