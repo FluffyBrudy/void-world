@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Literal, Union
 
+from entities.projectile.fire import FireProjectile
+
 if TYPE_CHECKING:
     from entities.enemy_entity import Bat, FireWorm, Mushroom
     from entities.player import Player

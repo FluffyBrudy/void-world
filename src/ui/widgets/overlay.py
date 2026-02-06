@@ -7,6 +7,7 @@ from pygame.surface import Surface
 
 from ttypes.index_type import UIOptions
 from ui.base.uibase import UIBase
+from managers.asset_manager import assets_manager
 
 if TYPE_CHECKING:
     from game import Game
@@ -92,7 +93,7 @@ class CooldownOverlay(UIBase):
         remaining_ms = self.timer.get_timediff_ratio()
         remaining_sec = round(1 - remaining_ms, 1)
 
-        label = self.game.fonts["monogram"].render(
+        label = assets_manager.fonts["monogram"].render(
             str(remaining_sec),
             True,
             (255, 255, 255),

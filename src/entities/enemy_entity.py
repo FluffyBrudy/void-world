@@ -8,9 +8,11 @@ from pytmx.pytmx import pygame
 
 from entities.base_entity import BaseEntity
 from entities.physics_entity import PhysicsEntity
+from entities.projectile.fire import FireProjectile
 from entities.states import bat_fsm as bat_fsm
 from entities.states import ground_enemy_fsm
 from entities.states.base_fsm import State
+from managers.asset_manager import assets_manager
 from ttypes.index_type import TPosType
 from ui.widgets.healthbar import HealthbarUI
 from utils.timer import Timer
@@ -39,8 +41,8 @@ class Enemy(PhysicsEntity, ABC):
         self.chase_radius = chase_radius
         self.stats.update({"health": 1.0, "damage": 0.1})
 
-        hit_anim = self.game.assets[f"{etype}/hit"]
-        attack_anim = self.game.assets[f"{etype}/attack"]
+        hit_anim = assets_manager.assets[f"{etype}/hit"]
+        attack_anim = assets_manager.assets[f"{etype}/attack"]
 
         anim_hit_ms = int(hit_anim.frames_len * hit_anim.animation_speed * 1000)
         anim_attack_ms = int(attack_anim.frames_len * attack_anim.animation_speed * 1000)
@@ -209,9 +211,15 @@ class FireWorm(Enemy):
         )
         self.obey_gravity = True
 
-    def can_chase(self, entity: BaseEntity):
+        self.projectile_cooldown = Timer(500)
+
+    def get_distance_to(self, entity: BaseEntity):
         distance_y = abs(entity.pos.y - self.pos.y)
         distance_x = entity.pos.x - self.pos.x
+        return (distance_x, distance_y)
+
+    def can_chase(self, entity: BaseEntity):
+        distance_x, distance_y = self.get_distance_to(entity)
         return distance_y <= self.size[1] and abs(distance_x) <= self.chase_radius
 
     def can_attack(self, entity: BaseEntity) -> bool:

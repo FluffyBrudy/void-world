@@ -1,5 +1,4 @@
 from itertools import chain
-from typing import Dict
 
 import pygame
 
@@ -8,24 +7,22 @@ from constants import (
     ASSETS_PATH,
     DEADZONE_CAMERA_THRESHOLD_X,
     FPS,
+    PLAYER_SCALE,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
+    TILEMAP_SCALE,
 )
 from entities.base_entity import BaseEntity
 from entities.enemy_entity import Bat, Enemy, FireWorm, Mushroom
 from entities.player import Player
+from entities.projectile.fire import FireProjectile
 from environment.parallaxbg import ParallaxBg
 from lib.tilemap import Tilemap
+from managers.asset_manager import assets_manager
 from particle.particle_manager import ParticleManager
 from pydebug import Debug
-from ttypes.index_type import ImageLoadOptions
 from ui.widgets.overlay import CooldownOverlay
 from ui.widgets.playerhud import PlayerHUD
-from utils.animation import Animation, PostAnimatableAnimation
-from utils.image_utils import load_image, load_images, load_spritesheet
-
-TILEMAP_SCALE = 5
-PLAYER_SCALE = TILEMAP_SCALE / 2.5
 
 
 class Game:
@@ -48,248 +45,11 @@ class Game:
         for interface in interface_classes:
             interface.game = self
 
-        player_path = ASSETS_PATH / "characters" / "player"
-
-        self.assets: Dict[str, Animation] = {
-            "player/idle": Animation(
-                load_images(
-                    player_path / "idle",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, (41, 43, 34, 38)),
-                ),
-                0.2,
-            ),
-            "player/idleturn": Animation(
-                load_spritesheet(
-                    player_path / "idle_turn" / "idle_turn.png",
-                    (128, 128),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                    flip=(True, False),
-                ),
-                animation_speed=0.2,
-                loop=False,
-            ),
-            "player/run": Animation(
-                load_images(
-                    player_path / "run",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, (44, 43, 43, 40)),
-                ),
-                0.2,
-            ),
-            "player/jump": Animation(
-                load_images(
-                    player_path / "jump",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, (44, 36, 41, 55)),
-                ),
-                0.2,
-                False,
-            ),
-            "player/fall": PostAnimatableAnimation(
-                load_spritesheet(
-                    player_path / "fall" / "fall_loop.png",
-                    (128, 128),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, (44, 36, 41, 55)),
-                ),
-                load_spritesheet(
-                    player_path / "fall" / "fall.png",
-                    (128, 128),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, (44, 36, 41, 55)),
-                ),
-                0.2,
-                0.1,
-                True,
-            ),
-            "player/attack": Animation(
-                load_images(
-                    player_path / "attack",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, ((52, 42, 63, 47))),
-                ),
-                0.2,
-                False,
-            ),
-            "player/hit": Animation(
-                load_spritesheet(
-                    player_path / "hurt" / "hurt.png",
-                    (128, 128),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                    flip=(True, False),
-                ),
-                animation_speed=0.2,
-                loop=False,
-            ),
-            "player/wallslide": Animation(
-                load_spritesheet(
-                    player_path / "wallslide" / "wallslide.png",
-                    (128, 128),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                False,
-            ),
-            "player/skillcast": Animation(
-                load_images(
-                    player_path / "idle",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, (41, 43, 34, 38)),
-                ),
-                0.5,
-                False,
-            ),
-            "bat/fly": Animation(
-                load_images(
-                    ASSETS_PATH / "enemies" / "bat" / "fly",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                True,
-            ),
-            "bat/chase": Animation(
-                load_images(
-                    ASSETS_PATH / "enemies" / "bat" / "fly",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                True,
-            ),
-            "bat/attack": Animation(
-                load_images(
-                    ASSETS_PATH / "enemies" / "bat" / "attack",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                False,
-            ),
-            "bat/hit": Animation(
-                load_images(
-                    ASSETS_PATH / "enemies" / "bat" / "hit",
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                True,
-            ),
-            "mushroom/idle": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "mushroom" / "idle.png",
-                    (150, 150),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                )
-            ),
-            "mushroom/run": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "mushroom" / "run.png",
-                    (150, 150),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                )
-            ),
-            "mushroom/hit": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "mushroom" / "hit.png",
-                    (150, 150),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                False,
-            ),
-            "mushroom/death": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "mushroom" / "death.png",
-                    (150, 150),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.05,
-                False,
-            ),
-            "mushroom/attack": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "mushroom" / "attack.png",
-                    (150, 150),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                animation_speed=0.2,
-                loop=False,
-            ),
-            "fireworm/idle": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "fireworm" / "idle.png",
-                    (90, 90),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                True,
-            ),
-            "fireworm/death": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "fireworm" / "death.png",
-                    (90, 90),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                False,
-            ),
-            "fireworm/hit": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "fireworm" / "hit.png",
-                    (90, 90),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                False,
-            ),
-            "fireworm/run": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "fireworm" / "run.png",
-                    (90, 90),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                True,
-            ),
-            "fireworm/attack": Animation(
-                load_spritesheet(
-                    ASSETS_PATH / "enemies" / "fireworm" / "attack.png",
-                    (90, 90),
-                    scale_ratio_or_size=PLAYER_SCALE,
-                    trim_transparent_pixel=(True, None),
-                ),
-                0.2,
-                False,
-            ),
-        }
-
-        skills_default_options: ImageLoadOptions = {"trim_transparent_pixel": (True, None)}
-        self.icons = {
-            "player/skills": {
-                "dash": load_image(ASSETS_PATH / "icons" / "player" / "skill" / "dash.png", **skills_default_options),
-                "heal": load_image(ASSETS_PATH / "icons" / "player" / "skill" / "heal.png", **skills_default_options),
-            }
-        }
-
-        self.fonts = {"monogram": pygame.Font(ASSETS_PATH / "fonts" / "monogram.ttf", size=30)}
+        assets_manager.load_all()
 
         self.level = 0
 
-        player_base_size = self.assets["player/idle"].get_frame().size
+        player_base_size = assets_manager.assets["player/idle"].get_frame().size
         self.player = Player((2000, 200), player_base_size, (0, 0))
         self.player.set_attack_size(
             {
@@ -308,9 +68,9 @@ class Game:
 
         self.particle_manager = ParticleManager()
 
-        bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
-        mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20))
-        fireworm = FireWorm((1200, 0), self.assets["fireworm/idle"].get_frame().size, (0, -20))
+        bat = Bat((800, 0), assets_manager.assets["bat/fly"].get_frame().size)
+        mushroom = Mushroom((800, 0), assets_manager.assets["bat/fly"].get_frame().size, (0, -20))
+        fireworm = FireWorm((1200, 0), assets_manager.assets["fireworm/idle"].get_frame().size, (0, -20))
 
         bat.set_target(self.player)
         mushroom.set_target(self.player)
@@ -367,6 +127,7 @@ class Game:
         self.parallaxbg.render()
 
         BaseEntity.render_all(self.screen, self.dt, self.scroll)
+        FireProjectile.render_all(self.screen, self.dt, self.scroll)
         self.player.render(self.screen, self.scroll)
         self.tilemap.render()
 

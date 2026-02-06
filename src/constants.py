@@ -24,3 +24,6 @@ GRID_NEIGHBOURS_9 = (
 	(-1, 1),  (0, 1),  (1, 1)
 )
 # fmt: on
+
+TILEMAP_SCALE = 5
+PLAYER_SCALE = TILEMAP_SCALE / 2.5

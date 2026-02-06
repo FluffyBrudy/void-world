@@ -7,6 +7,7 @@ from ttypes.index_type import UIOptions
 from ui.base.uibase import UIBase
 from ui.elements.progressbar import ProgressBarUI
 from ui.widgets.overlay import CooldownOverlay
+from managers.asset_manager import assets_manager
 
 if TYPE_CHECKING:
     from entities.player import Player
@@ -78,14 +79,14 @@ class PlayerHUD(UIBase):
 
         self.dash_cooldown_ui = CooldownOverlay(
             skill=player.skills["dash"],
-            icon=self.game.icons["player/skills"]["dash"],
+            icon=assets_manager.icons["player/skills"]["dash"],
             size=SKILL_SIZE,
             **{**SKILLS_DEFAULT_UIOPTIONS, "margin_x": skills_start_x, "margin_y": skills_y},
         )
 
         self.heal_cooldown_ui = CooldownOverlay(
             skill=player.skills["heal"],
-            icon=self.game.icons["player/skills"]["heal"],
+            icon=assets_manager.icons["player/skills"]["heal"],
             size=SKILL_SIZE,
             **{
                 **SKILLS_DEFAULT_UIOPTIONS,
