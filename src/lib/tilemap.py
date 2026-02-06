@@ -40,34 +40,6 @@ class Tilemap:
 
         self.load_map(getattr(self.game, "level", 0))
 
-    def physics_tiles_around(self, grid_pos: Tuple[int, int]) -> List[Tuple[int, int]]:
-        tiles: List[Tuple[int, int]] = []
-        gx, gy = grid_pos
-
-        for nx, ny in GRID_NEIGHBOURS_9:
-            new_x, new_y = gx + nx, gy + ny
-            tile_loc = (new_x, new_y)
-            if tile_loc in self.grid_tiles:
-                tiles.append(tile_loc)
-
-        return tiles
-
-    def physics_rect_around(
-        self,
-        pos: Tuple[float | int, float | int] | IntPoint | Sequence[int] | Vector2,
-    ) -> List[Rect]:
-        rects: List[Rect] = []
-
-        tw, th = self.tilewidth, self.tileheight
-        grid_x = int(pos[0] // self.tilewidth)
-        grid_y = int(pos[1] // self.tileheight)
-
-        for tile_x, tile_y in self.physics_tiles_around((grid_x, grid_y)):
-            rect = pygame.Rect(tile_x * tw, tile_y * th, tw, th)
-            rects.append(rect)
-
-        return rects
-
     def get_physics_rects(self, area: Rect) -> List[Rect]:
         rects: List[Rect] = []
         tw, th = self.tilewidth, self.tileheight

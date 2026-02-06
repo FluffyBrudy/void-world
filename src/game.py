@@ -236,7 +236,7 @@ class Game:
                     trim_transparent_pixel=(True, None),
                 ),
                 0.2,
-                False,
+                True,
             ),
             "fireworm/death": Animation(
                 load_spritesheet(
@@ -266,7 +266,7 @@ class Game:
                     trim_transparent_pixel=(True, None),
                 ),
                 0.2,
-                False,
+                True,
             ),
             "fireworm/attack": Animation(
                 load_spritesheet(
@@ -313,10 +313,10 @@ class Game:
 
         bat = Bat((800, 0), self.assets["bat/fly"].get_frame().size)
         mushroom = Mushroom((1200, 0), self.assets["bat/fly"].get_frame().size, (0, -20))
-        fireworm = FireWorm((1200, 0), self.assets["fireworm/idle"].get_frame().size, (0, -10))
+        fireworm = FireWorm((1200, 0), self.assets["fireworm/idle"].get_frame().size, (0, -20))
 
         bat.set_target(self.player)
-        # mushroom.set_target(self.player)
+        mushroom.set_target(self.player)
         fireworm.set_target(self.player)
 
         self.player_hud = PlayerHUD(self.player)
