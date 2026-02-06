@@ -1,12 +1,9 @@
+from itertools import chain
 from typing import Dict
 
 import pygame
 
-from collision.collision_resolution import (
-    player_bat_collision,
-    player_firworm_collision,
-    player_mushroom_collision,
-)
+from collision.collision_resolution import base_collision
 from constants import (
     ASSETS_PATH,
     DEADZONE_CAMERA_THRESHOLD_X,
@@ -353,12 +350,9 @@ class Game:
 
     def handle_collision(self):
         player = self.player
-        for bat in Bat.get_by_group():
-            player_bat_collision(player, bat)
-        for mushroom in Mushroom.get_by_group():
-            player_mushroom_collision(player, mushroom)
-        for fireworm in FireWorm.get_by_group():
-            player_firworm_collision(player, fireworm)
+        base_collideable_enemies = chain(Bat.get_by_group(), Mushroom.get_by_group(), FireWorm.get_by_group())
+        for enemy in base_collideable_enemies:
+            base_collision(player, enemy)
 
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0
