@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING, Callable, Iterable, Literal, Sequence, Union
 
+from entities.base_entity import BaseEntity
 from entities.projectile.fire import FireProjectile
+from utils.enemy_utils import melee_range
 
 if TYPE_CHECKING:
     from entities.enemy_entity import Bat, FireWorm, Mushroom
@@ -23,21 +25,53 @@ def _attack_phase(entity: EnemyType) -> Literal["startup", "active", "finish"]:
     return "finish"
 
 
-def base_collision(player: "Player", entity: EnemyType):
+def player_hits_enemy(player, enemy):
+    if not player.is_attacking:
+        return
+
+    if not enemy.hit_timer.has_reached_interval():
+        return
+
+    enemy.transition_to("hit")
+    player.apply_damage_to_target(enemy)
+
+
+def enemy_hits_player(player, enemy):
+    if enemy.get_state() != "attack":
+        return
+
+    if not player.hit_timer.has_reached_interval():
+        return
+
+    if player.is_dashing:
+        return
+
+    if _attack_phase(enemy) != "active":
+        return
+
+    player.transition_to("hit")
+    player.take_damage(enemy.stats["damage"])
+
+
+def base_collision(player: "Player", entity: EnemyType, collide_checker: Callable[[BaseEntity, BaseEntity], bool]):
     if not (player.get_state() == "attack" or entity.get_state() == "attack"):
         return
 
-    state = entity.get_state()
+    if collide_checker(player, entity):
+        player_hits_enemy(player, entity)
+        enemy_hits_player(player, entity)
 
-    if player.attack_hitbox().colliderect(entity.hitbox()):
-        if player.is_attacking and entity.hit_timer.has_reached_interval():
+
+def melee_enemy_collision(player: "Player", enemy: EnemyType):
+    return base_collision(player, enemy, melee_range)
+
+
+def projectile_collision(entity: "Player", projectiles: Iterable["FireProjectile"]):
+    if not entity.hit_timer.has_reached_interval():
+        return
+    for projectile in projectiles:
+        if projectile.rect().colliderect(entity.hitbox()):
+            projectile.mark_ready_to_kill()
             entity.transition_to("hit")
-            player.apply_damage_to_target(entity)
-        elif (
-            state == "attack"
-            and player.hit_timer.has_reached_interval()
-            and not player.is_dashing
-            and _attack_phase(entity) == "active"
-        ):
-            player.transition_to("hit")
-            player.take_damage(entity.stats["damage"])
+            entity.take_damage(0.1)
+            break

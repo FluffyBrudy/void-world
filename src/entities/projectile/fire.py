@@ -1,6 +1,6 @@
 from typing import List
 
-from pygame import Surface
+from pygame import Rect, Surface
 from pygame.math import Vector2
 
 from constants import BASE_SPEED
@@ -23,7 +23,7 @@ class FireProjectile:
         FireProjectile.__instances.append(self)
 
     def rect(self):
-        return (*self.pos, *self.size)
+        return Rect(*(self.pos[0], self.pos[1]), *self.size)
 
     def update(self, dt: float):
         self.animation.update()
@@ -32,14 +32,21 @@ class FireProjectile:
         self.pos += displacement
         self.projectile_range -= displacement.magnitude()
         if self.projectile_range <= 0 and not self.ready_to_kill:
-            self.velocity *= 0
-            self.ready_to_kill = True
-            self.animation = assets_manager.assets["projectile/fire_explosion"].copy()
+            self.mark_ready_to_kill()
         return self.ready_to_kill and self.animation.has_animation_end()
+
+    def mark_ready_to_kill(self):
+        self.ready_to_kill = True
+        self.animation = assets_manager.assets["projectile/fire_explosion"].copy()
+        self.velocity = Vector2(0, 0)
 
     def render(self, surface: Surface, offset: Vector2):
         frame = self.animation.get_frame()
         surface.blit(frame, self.pos - offset)
+
+    @classmethod
+    def get_instances(cls):
+        return cls.__instances
 
     @classmethod
     def render_all(cls, surface: Surface, dt: float, offset: Vector2):

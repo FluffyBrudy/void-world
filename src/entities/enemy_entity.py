@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple, cast
 
 from pygame import Vector2
 from pygame.surface import Surface
@@ -15,6 +15,7 @@ from entities.states.base_fsm import State
 from managers.asset_manager import assets_manager
 from ttypes.index_type import TPosType
 from ui.widgets.healthbar import HealthbarUI
+from utils.enemy_utils import horizontal_range, melee_range
 from utils.timer import Timer
 
 if TYPE_CHECKING:
@@ -34,6 +35,7 @@ class Enemy(PhysicsEntity, ABC):
         hit_timer_ms: int = 0,
         attack_timer_ms: int = 0,
         chase_radius: int = 400,
+        attack_check: Callable[[BaseEntity, BaseEntity], bool] = melee_range,
     ) -> None:
         super().__init__(etype, pos, size, states, offset)
 
@@ -52,6 +54,8 @@ class Enemy(PhysicsEntity, ABC):
 
         self.healthbar = HealthbarUI(self, visibility_timer=self.hit_timer.interval, width=100, height=10)
 
+        self._attack_check = attack_check
+
     def set_target(self, target: BaseEntity):
         self.target = target
 
@@ -67,8 +71,8 @@ class Enemy(PhysicsEntity, ABC):
     @abstractmethod
     def can_chase(self, entity: BaseEntity) -> bool: ...
 
-    @abstractmethod
-    def can_attack(self, entity: BaseEntity) -> bool: ...
+    def can_attack(self, entity: BaseEntity) -> bool:
+        return self._attack_check(self, entity)
 
     def take_damage(self, amount: float) -> Optional[bool]:
         self.stats["health"] -= amount
@@ -181,7 +185,7 @@ class Mushroom(Enemy):
         return distance_y <= self.size[1] and abs(distance_x) <= self.chase_radius
 
     def can_attack(self, entity: BaseEntity) -> bool:
-        return self.rect().colliderect(entity.hitbox())
+        return super().can_attack(entity)
 
     def update(self, dt: float):
         self.healthbar.update()
@@ -197,7 +201,7 @@ class FireWorm(Enemy):
         offset: Tuple[int, int] = (0, 0),
         hit_timer_ms: int = 2000,
         attack_timer_ms: int = 1700,
-        chase_radius: int = 400,
+        chase_radius: int = 500,
     ):
         super().__init__(
             etype="fireworm",
@@ -208,10 +212,10 @@ class FireWorm(Enemy):
             hit_timer_ms=hit_timer_ms,
             attack_timer_ms=attack_timer_ms,
             chase_radius=chase_radius,
+            attack_check=lambda self_, target: horizontal_range(self_, target, max_x=400, max_y=self.size[1]),
         )
+        self.states["attack"] = ground_enemy_fsm.WormAttackState()
         self.obey_gravity = True
-
-        self.projectile_cooldown = Timer(500)
 
     def get_distance_to(self, entity: BaseEntity):
         distance_y = abs(entity.pos.y - self.pos.y)
@@ -223,7 +227,13 @@ class FireWorm(Enemy):
         return distance_y <= self.size[1] and abs(distance_x) <= self.chase_radius
 
     def can_attack(self, entity: BaseEntity) -> bool:
-        return self.rect().colliderect(entity.hitbox())
+        return super().can_attack(entity)
+
+    def shoot_fireball(self):
+        hbox = self.hitbox()
+        pos = hbox.midleft if self.flipped else hbox.midright
+        vel = (-5, 0) if self.flipped else (5, 0)
+        FireProjectile(pos, vel, 1000)
 
     def update(self, dt: float):
         self.healthbar.update()

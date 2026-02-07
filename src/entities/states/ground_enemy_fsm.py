@@ -4,6 +4,7 @@ from entities.states.base_fsm import State
 
 if TYPE_CHECKING:
     from entities.enemy_entity import Enemy
+    from src.entities.enemy_entity import FireWorm
 
 
 class IdleState(State["Enemy"]):
@@ -60,8 +61,8 @@ class RunState(State["Enemy"]):
 
 
 class AttackState(State["Enemy"]):
-    def __init__(self):
-        super().__init__("attack", 0, 0)
+    def __init__(self, startup_frame: int = 0, active_frame: int = 0):
+        super().__init__("attack", startup_frame, active_frame)
 
     def enter(self, entity: "Enemy"):
         entity.velocity *= 0
@@ -107,3 +108,13 @@ class DeathState(State["Enemy"]):
         if entity.animation.has_animation_end():
             entity.alive = False
         return None
+
+
+class WormAttackState(AttackState):
+    def __init__(self):
+        super().__init__(0, 10)
+
+    def update(self, entity: "FireWorm", **kwargs) -> None:  # type:ignore
+        if entity.animation.frame_index == self.active_frame:
+            entity.shoot_fireball()
+        return super().update(entity, **kwargs)

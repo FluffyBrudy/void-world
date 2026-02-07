@@ -2,7 +2,7 @@ from itertools import chain
 
 import pygame
 
-from collision.collision_resolution import base_collision
+from collision.collision_resolution import base_collision, melee_enemy_collision, projectile_collision
 from constants import (
     ASSETS_PATH,
     DEADZONE_CAMERA_THRESHOLD_X,
@@ -110,9 +110,12 @@ class Game:
 
     def handle_collision(self):
         player = self.player
-        base_collideable_enemies = chain(Bat.get_by_group(), Mushroom.get_by_group(), FireWorm.get_by_group())
-        for enemy in base_collideable_enemies:
-            base_collision(player, enemy)
+        collision_enemies = chain(Bat.get_by_group(), Mushroom.get_by_group())
+        for enemy in collision_enemies:
+            melee_enemy_collision(player, enemy)
+
+        collision_projectiles = chain(FireProjectile.get_instances())
+        projectile_collision(player, collision_projectiles)
 
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0
@@ -127,8 +130,8 @@ class Game:
         self.parallaxbg.render()
 
         BaseEntity.render_all(self.screen, self.dt, self.scroll)
-        FireProjectile.render_all(self.screen, self.dt, self.scroll)
         self.player.render(self.screen, self.scroll)
+        FireProjectile.render_all(self.screen, self.dt, self.scroll)
         self.tilemap.render()
 
         Debug.draw_all(self.screen)
