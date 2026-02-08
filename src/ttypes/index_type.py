@@ -48,3 +48,7 @@ class Rectable(Protocol):
 class Renderable(Protocol):
     def render(self, screen: Surface, pos_offset: TPosType): ...
     def update(self): ...
+
+
+class VectorPos(Protocol):
+    pos: Vector2

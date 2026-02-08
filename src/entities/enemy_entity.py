@@ -1,11 +1,9 @@
-import math
 from abc import ABC, abstractmethod
 from random import uniform
 from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple, cast
 
 from pygame import Vector2
 from pygame.surface import Surface
-from pytmx.pytmx import pygame
 
 from entities.base_entity import BaseEntity
 from entities.physics_entity import PhysicsEntity
@@ -14,10 +12,9 @@ from entities.states import bat_fsm as bat_fsm
 from entities.states import ground_enemy_fsm
 from entities.states.base_fsm import State
 from managers.asset_manager import assets_manager
-from pydebug import pgdebug
 from ttypes.index_type import TPosType
 from ui.widgets.healthbar import HealthbarUI
-from utils.enemy_utils import horizontal_range, melee_range
+from utils.combat_utils import horizontal_range, melee_range
 from utils.timer import Timer
 
 if TYPE_CHECKING:
@@ -85,7 +82,6 @@ class Enemy(PhysicsEntity, ABC):
         self.healthbar.render(surface, offset)
         frame, pos = self.get_renderable(offset)
 
-        pgdebug(f"{self.get_state()}")
         if not self.hit_timer.has_reached_interval() and self.get_state() != "death":
             frame_cp = frame.copy()
 

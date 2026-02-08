@@ -3,7 +3,6 @@ from typing import Tuple, Union
 
 from pygame import Vector2
 
-
 TVectorParams = Union[Tuple[int, int] | Vector2]
 
 
@@ -28,3 +27,9 @@ def circle_collision(source: TVectorParams, target: TVectorParams, *rr: float):
     dy = target[1] - source[1]
     distance = (dx**2) + (dy**2)
     return [distance <= r**2 for r in rr]
+
+
+def sign(a: float | int):
+    if a == 0:
+        return 0
+    return 1 if a > 0 else -1

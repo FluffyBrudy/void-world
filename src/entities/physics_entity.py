@@ -57,6 +57,10 @@ class PhysicsEntity(BaseEntity):
             self.pos.x -= hitbox.right - tile_rect.left
         self.velocity.x = 0
 
+    def knockback(self, side: pygame.Vector2):
+        self.velocity.x = side.x
+        self.velocity.y = side.y
+
     def collision_vertical(self):
         tiles = self.game.tilemap.get_physics_rects(self.hitbox())
         hitbox = self.hitbox()

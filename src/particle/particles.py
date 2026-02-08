@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from math import cos, pi, radians, sin
+from math import cos, pi, sin
 from random import randint, random, uniform
 from typing import TYPE_CHECKING, Sequence, Tuple
 
@@ -9,7 +9,6 @@ from pygame.draw import circle as draw_circle
 from pygame.typing import ColorLike
 
 from constants import BASE_SPEED
-from pydebug import pgdebug
 from ttypes.index_type import TPosType
 
 if TYPE_CHECKING:

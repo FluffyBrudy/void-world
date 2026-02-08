@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING, Callable, Literal, Union
 
 from entities.base_entity import BaseEntity
+from entities.player import Player
 from entities.projectile.fire import FireProjectile
-from utils.enemy_utils import melee_range
+from utils.combat_utils import direction, melee_range
 
 if TYPE_CHECKING:
     from entities.enemy_entity import Bat, FireWorm, Mushroom
-    from entities.player import Player
 
 EnemyType = Union["Mushroom", "Bat", "FireWorm"]
 
@@ -25,7 +25,7 @@ def _attack_phase(entity: EnemyType) -> Literal["startup", "active", "finish"]:
     return "finish"
 
 
-def player_hits_enemy(player, enemy):
+def player_hits_enemy(player: "Player", enemy: EnemyType):
     if not player.is_attacking:
         return
 
@@ -34,6 +34,7 @@ def player_hits_enemy(player, enemy):
 
     enemy.transition_to("hit")
     player.apply_damage_to_target(enemy)
+    enemy.knockback(direction(player, enemy, scale=2.0))
 
 
 def enemy_hits_player(player, enemy):
@@ -51,6 +52,7 @@ def enemy_hits_player(player, enemy):
 
     player.transition_to("hit")
     player.take_damage(enemy.stats["damage"])
+    player.knockback(direction(enemy, player))
 
 
 def base_collision(player: "Player", entity: EnemyType, collide_checker: Callable[[BaseEntity, BaseEntity], bool]):
@@ -71,9 +73,13 @@ def projectile_collision(projectile: "FireProjectile", entity: "Player"):
         return False
 
     if projectile.rect().colliderect(entity.hitbox()):
-        projectile.mark_ready_to_kill()
-        entity.transition_to("hit")
-        entity.take_damage(0.1)
-        return True
+        if isinstance(entity, Player) and entity.is_immune():
+            return False
+        else:
+            projectile.mark_ready_to_kill()
+            entity.transition_to("hit")
+            entity.take_damage(0.1)
+            entity.knockback(direction(projectile, entity))
+            return True
 
     return False

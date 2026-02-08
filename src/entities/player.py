@@ -65,7 +65,7 @@ class Player(PhysicsEntity):
         self.dash_timer = Timer(2000, True)
         self.hit_timer = Timer(2000, True)
 
-        self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.5, "mana_regain": 0.001, "shield": 0.0}
+        self.stats: Dict[str, float] = {"health": 1.0, "mana": 1.0, "damage": 0.25, "mana_regain": 0.001, "shield": 0.0}
         self.stat_bounds = {
             "health": (0.0, 1.0),
             "mana": (0.0, 1.0),
@@ -110,6 +110,9 @@ class Player(PhysicsEntity):
             if max_bound is not None:
                 new_val = min(max_bound, new_val)
         self.stats[stat_name] = new_val
+
+    def is_immune(self):
+        return self.is_dashing or not self.hit_timer.has_reached_interval()
 
     def take_damage(self, damage: float):
         self.modify_stat("health", -(abs(damage)))

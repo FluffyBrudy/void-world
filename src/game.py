@@ -47,7 +47,7 @@ class Game:
 
         assets_manager.load_all()
 
-        self.level = 0
+        self.level = 1
 
         player_base_size = assets_manager.assets["player/idle"].get_frame().size
         self.player = Player((2000, 200), player_base_size, (0, 0))
@@ -60,7 +60,7 @@ class Game:
         )
 
         self.tilemap = Tilemap(tile_scale=TILEMAP_SCALE)
-        init_load = self.tilemap.load_map(0)
+        init_load = self.tilemap.load_map(self.level)
         if not init_load:
             raise Exception("tilemap not initialized")
         self.load_entities()
@@ -140,13 +140,11 @@ class Game:
             melee_enemy_collision(player, enemy)
 
         collision_projectiles = chain(FireProjectile.get_instances())
-        c = 0
+
         for projectile in collision_projectiles:
             projectile_collision(projectile, player)
             if self.tilemap.is_solid_tile((projectile.pos)):
                 projectile.mark_ready_to_kill()
-            c += 1
-        print(c)
 
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0
