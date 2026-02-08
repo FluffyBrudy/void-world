@@ -2,7 +2,7 @@ from itertools import chain
 
 import pygame
 
-from collision.collision_resolution import base_collision, melee_enemy_collision, projectile_collision
+from collision.collision_resolution import melee_enemy_collision, projectile_collision
 from constants import (
     ASSETS_PATH,
     DEADZONE_CAMERA_THRESHOLD_X,
@@ -63,20 +63,45 @@ class Game:
         init_load = self.tilemap.load_map(0)
         if not init_load:
             raise Exception("tilemap not initialized")
+        self.load_entities()
 
         self.parallaxbg = ParallaxBg(ASSETS_PATH / "parallax")
 
         self.particle_manager = ParticleManager()
 
-        bat = Bat((800, 0), assets_manager.assets["bat/fly"].get_frame().size)
-        mushroom = Mushroom((800, 0), assets_manager.assets["bat/fly"].get_frame().size, (0, -20))
-        fireworm = FireWorm((1200, 0), assets_manager.assets["fireworm/idle"].get_frame().size, (0, -20))
-
-        bat.set_target(self.player)
-        mushroom.set_target(self.player)
-        fireworm.set_target(self.player)
-
         self.player_hud = PlayerHUD(self.player)
+
+    def load_entities(self):
+        enemies_hbox_offset: dict[str, tuple[int, int]] = {
+            "bat": (0, 0),
+            "mushroom": (0, -20),
+            "fireworm": (0, -10),
+        }
+
+        for key, positions in self.tilemap.entities.items():
+            if key == "bat":
+                size = assets_manager.assets["bat/fly"].get_frame().size
+                hox, hoy = enemies_hbox_offset[key]
+
+                for x, y in positions:
+                    bat = Bat((x, y), size, offset=(hox, hoy))
+                    bat.set_target(self.player)
+
+            elif key == "mushroom":
+                size = assets_manager.assets["bat/fly"].get_frame().size
+                hox, hoy = enemies_hbox_offset[key]
+
+                for x, y in positions:
+                    mushroom = Mushroom((x, y), size, offset=(hox, hoy))
+                    mushroom.set_target(self.player)
+
+            elif key == "fireworm":
+                size = assets_manager.assets["fireworm/idle"].get_frame().size
+                hox, hoy = enemies_hbox_offset[key]
+
+                for x, y in positions:
+                    fireworm = FireWorm((x, y), size, offset=(hox, hoy))
+                    fireworm.set_target(self.player)
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -110,12 +135,18 @@ class Game:
 
     def handle_collision(self):
         player = self.player
-        collision_enemies = chain(Bat.get_by_group(), Mushroom.get_by_group())
+        collision_enemies = chain(Bat.get_by_group(), Mushroom.get_by_group(), FireWorm.get_by_group())
         for enemy in collision_enemies:
             melee_enemy_collision(player, enemy)
 
         collision_projectiles = chain(FireProjectile.get_instances())
-        projectile_collision(player, collision_projectiles)
+        c = 0
+        for projectile in collision_projectiles:
+            projectile_collision(projectile, player)
+            if self.tilemap.is_solid_tile((projectile.pos)):
+                projectile.mark_ready_to_kill()
+            c += 1
+        print(c)
 
     def update(self):
         dt = self.clock.tick(FPS) / 1000.0
@@ -131,8 +162,8 @@ class Game:
 
         BaseEntity.render_all(self.screen, self.dt, self.scroll)
         self.player.render(self.screen, self.scroll)
-        FireProjectile.render_all(self.screen, self.dt, self.scroll)
         self.tilemap.render()
+        FireProjectile.render_all(self.screen, self.dt, self.scroll)
 
         Debug.draw_all(self.screen)
 

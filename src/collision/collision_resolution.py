@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Iterable, Literal, Sequence, Union
+from typing import TYPE_CHECKING, Callable, Literal, Union
 
 from entities.base_entity import BaseEntity
 from entities.projectile.fire import FireProjectile
@@ -66,12 +66,14 @@ def melee_enemy_collision(player: "Player", enemy: EnemyType):
     return base_collision(player, enemy, melee_range)
 
 
-def projectile_collision(entity: "Player", projectiles: Iterable["FireProjectile"]):
+def projectile_collision(projectile: "FireProjectile", entity: "Player"):
     if not entity.hit_timer.has_reached_interval():
-        return
-    for projectile in projectiles:
-        if projectile.rect().colliderect(entity.hitbox()):
-            projectile.mark_ready_to_kill()
-            entity.transition_to("hit")
-            entity.take_damage(0.1)
-            break
+        return False
+
+    if projectile.rect().colliderect(entity.hitbox()):
+        projectile.mark_ready_to_kill()
+        entity.transition_to("hit")
+        entity.take_damage(0.1)
+        return True
+
+    return False

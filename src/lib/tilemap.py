@@ -1,9 +1,11 @@
-from typing import TYPE_CHECKING, Dict, List, Tuple, TypedDict
+from collections import defaultdict
+from typing import TYPE_CHECKING, DefaultDict, Dict, List, Tuple, TypedDict
 
 import pygame
 from pygame import Rect, Surface
 from pygame.typing import IntPoint
 from pytmx import TiledMap, TiledObjectGroup, TiledTileLayer, load_pygame
+from pytmx.pytmx import Point
 
 from constants import (
     MAP_PATH,
@@ -11,6 +13,8 @@ from constants import (
     SCREEN_WIDTH,
 )
 from lib.tile import Tile
+from logger import logger
+from ttypes.index_type import TPosType
 
 if TYPE_CHECKING:
     from game import Game
@@ -35,8 +39,7 @@ class Tilemap:
 
         self.tile_cache: Dict[int, Surface] = {}
         self.object_cache: Dict[int, Surface] = {}
-
-        self.load_map(getattr(self.game, "level", 0))
+        self.entities: DefaultDict[str, List[Tuple[int, int]]] = defaultdict(list)
 
     def get_physics_rects(self, area: Rect) -> List[Rect]:
         rects: List[Rect] = []
@@ -53,7 +56,7 @@ class Tilemap:
                     rects.append(pygame.Rect(x * tw, y * th, tw, th))
         return rects
 
-    def is_solid_tile(self, pos: IntPoint):
+    def is_solid_tile(self, pos: TPosType):
         x = int(pos[0] // self.tilewidth)
         y = int(pos[1] // self.tileheight)
         return (x, y) in self.grid_tiles
@@ -72,7 +75,7 @@ class Tilemap:
                     self.__load_object_layer(layer, map_data)
             return True
         except Exception as e:
-            print(e)
+            logger.error(e)
             return False
 
     def __load_tile_layer(self, layer: "TiledTileLayer", map_data: "TiledMap"):
@@ -91,8 +94,11 @@ class Tilemap:
                 self.grid_tiles[(x, y)] = tile
 
     def __load_object_layer(self, layer: "TiledObjectGroup", map_data: "TiledMap"):
-        for _ in layer:
-            pass  # later
+        if layer.name == "enemies":
+            for enemy in layer:
+                keyname = enemy.properties["etype"]
+                pos = int(enemy.x * self.tile_scale), int(enemy.y * self.tile_scale)
+                self.entities[keyname].append((pos))
 
     def render(self):
         surface = self.game.screen

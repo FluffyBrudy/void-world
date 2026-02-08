@@ -1,5 +1,6 @@
 import math
 from abc import ABC, abstractmethod
+from random import uniform
 from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple, cast
 
 from pygame import Vector2
@@ -13,6 +14,7 @@ from entities.states import bat_fsm as bat_fsm
 from entities.states import ground_enemy_fsm
 from entities.states.base_fsm import State
 from managers.asset_manager import assets_manager
+from pydebug import pgdebug
 from ttypes.index_type import TPosType
 from ui.widgets.healthbar import HealthbarUI
 from utils.enemy_utils import horizontal_range, melee_range
@@ -83,11 +85,12 @@ class Enemy(PhysicsEntity, ABC):
         self.healthbar.render(surface, offset)
         frame, pos = self.get_renderable(offset)
 
-        if not self.hit_timer.has_reached_interval():
+        pgdebug(f"{self.get_state()}")
+        if not self.hit_timer.has_reached_interval() and self.get_state() != "death":
             frame_cp = frame.copy()
 
-            t = math.radians(pygame.time.get_ticks() % 360)
-            alpha = (math.sin(t) + 0.5) * 255
+            t = uniform(0.4, 0.8)
+            alpha = int(t * 255)
 
             frame_cp.set_alpha(int(alpha))
             surface.blit(frame_cp, pos)
@@ -201,7 +204,7 @@ class FireWorm(Enemy):
         offset: Tuple[int, int] = (0, 0),
         hit_timer_ms: int = 2000,
         attack_timer_ms: int = 1700,
-        chase_radius: int = 500,
+        chase_radius: int = 800,
     ):
         super().__init__(
             etype="fireworm",
@@ -212,7 +215,9 @@ class FireWorm(Enemy):
             hit_timer_ms=hit_timer_ms,
             attack_timer_ms=attack_timer_ms,
             chase_radius=chase_radius,
-            attack_check=lambda self_, target: horizontal_range(self_, target, max_x=400, max_y=self.size[1]),
+            attack_check=lambda self_, target: horizontal_range(
+                self_, target, max_x=chase_radius // 2, max_y=self.size[1]
+            ),
         )
         self.states["attack"] = ground_enemy_fsm.WormAttackState()
         self.obey_gravity = True

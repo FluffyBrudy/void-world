@@ -2,7 +2,7 @@ from typing import Dict
 
 import pygame
 
-from constants import ASSETS_PATH, PLAYER_SCALE, TILEMAP_SCALE
+from constants import ASSETS_PATH, PLAYER_SCALE
 from ttypes.index_type import ImageLoadOptions
 from utils.animation import Animation, PostAnimatableAnimation
 from utils.image_utils import load_image, load_images, load_spritesheet
@@ -233,7 +233,7 @@ class AssetManager:
                         scale_ratio_or_size=PLAYER_SCALE,
                         trim_transparent_pixel=(True, None),
                     ),
-                    0.2,
+                    0.08,
                     False,
                 ),
                 "fireworm/hit": Animation(

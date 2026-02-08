@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, Dict, Tuple, override
 import pygame
 
 from constants import (
-    BASE_SPEED,
-    GRAVITY,
     JUMP_DISTANCE,
     MAX_FALL_SPEED,
     WALL_FRICTION_COEFFICIENT,

@@ -36,6 +36,7 @@ class FireProjectile:
         return self.ready_to_kill and self.animation.has_animation_end()
 
     def mark_ready_to_kill(self):
+        """WARNING: do not call this if ready_to_kill is True"""
         self.ready_to_kill = True
         self.animation = assets_manager.assets["projectile/fire_explosion"].copy()
         self.velocity = Vector2(0, 0)
@@ -46,7 +47,12 @@ class FireProjectile:
 
     @classmethod
     def get_instances(cls):
-        return cls.__instances
+        """
+        INFO: filtering is required otherwise if any collision checks use
+        original instances they refresh animation on each frame which
+        keeps projectile alive forever with stucked animation
+        """
+        return [x for x in cls.__instances if not x.ready_to_kill]
 
     @classmethod
     def render_all(cls, surface: Surface, dt: float, offset: Vector2):

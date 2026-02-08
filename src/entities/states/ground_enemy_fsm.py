@@ -99,7 +99,7 @@ class HitState(State["Enemy"]):
 
 class DeathState(State["Enemy"]):
     def __init__(self):
-        super().__init__("Death")
+        super().__init__("death")
 
     def enter(self, entity: "Enemy"):
         entity.velocity *= 0
