@@ -85,7 +85,7 @@ class Enemy(PhysicsEntity, ABC):
         if not self.hit_timer.has_reached_interval() and self.get_state() != "death":
             frame_cp = frame.copy()
 
-            t = uniform(0.4, 0.8)
+            t = uniform(0.1, 0.9)
             alpha = int(t * 255)
 
             frame_cp.set_alpha(int(alpha))
@@ -109,7 +109,7 @@ class Bat(Enemy):
         states: Dict[str, State] = {
             "fly": bat_fsm.FlyState(),
             "chase": bat_fsm.ChaseState(),
-            "attack": bat_fsm.AttackState(),
+            "attack": bat_fsm.AttackState(startup_frame=7, active_frame=3),
             "hit": bat_fsm.HitState(),
         }
 
@@ -145,16 +145,6 @@ class Bat(Enemy):
         return super().update(dt)
 
 
-def get_ground_enemy_states():
-    return {
-        "idle": ground_enemy_fsm.IdleState(),
-        "attack": ground_enemy_fsm.AttackState(),
-        "death": ground_enemy_fsm.DeathState(),
-        "hit": ground_enemy_fsm.HitState(),
-        "run": ground_enemy_fsm.RunState(),
-    }
-
-
 class Mushroom(Enemy):
     def __init__(
         self,
@@ -166,11 +156,18 @@ class Mushroom(Enemy):
         attack_timer_ms: int = 1700,
         chase_radius: int = 400,
     ):
+        states = {
+            "idle": ground_enemy_fsm.IdleState(),
+            "attack": ground_enemy_fsm.AttackState(startup_frame=6, active_frame=2),
+            "death": ground_enemy_fsm.DeathState(),
+            "hit": ground_enemy_fsm.HitState(),
+            "run": ground_enemy_fsm.RunState(),
+        }
         super().__init__(
             etype="mushroom",
             pos=pos,
             size=size,
-            states=get_ground_enemy_states(),
+            states=states,
             offset=offset,
             hit_timer_ms=hit_timer_ms,
             attack_timer_ms=attack_timer_ms,
@@ -202,11 +199,18 @@ class FireWorm(Enemy):
         attack_timer_ms: int = 1700,
         chase_radius: int = 800,
     ):
+        states = {
+            "idle": ground_enemy_fsm.IdleState(),
+            "attack": ground_enemy_fsm.WormAttackState(),
+            "death": ground_enemy_fsm.DeathState(),
+            "hit": ground_enemy_fsm.HitState(),
+            "run": ground_enemy_fsm.RunState(),
+        }
         super().__init__(
             etype="fireworm",
             pos=pos,
             size=size,
-            states=get_ground_enemy_states(),
+            states=states,
             offset=offset,
             hit_timer_ms=hit_timer_ms,
             attack_timer_ms=attack_timer_ms,
@@ -215,7 +219,6 @@ class FireWorm(Enemy):
                 self_, target, max_x=chase_radius // 2, max_y=self.size[1]
             ),
         )
-        self.states["attack"] = ground_enemy_fsm.WormAttackState()
         self.obey_gravity = True
 
     def get_distance_to(self, entity: BaseEntity):
