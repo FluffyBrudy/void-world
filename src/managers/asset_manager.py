@@ -4,7 +4,7 @@ import pygame
 
 from constants import ASSETS_PATH, PLAYER_SCALE
 from ttypes.index_type import ImageLoadOptions
-from utils.animation import Animation, PostAnimatableAnimation
+from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_spritesheet
 
 
@@ -37,6 +37,7 @@ class AssetManager:
         self.assets.update(
             {
                 "player/idle": Animation(
+                    "player/idle",
                     load_images(
                         player_path / "idle",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -45,6 +46,7 @@ class AssetManager:
                     0.2,
                 ),
                 "player/idleturn": Animation(
+                    "player/idleturn",
                     load_spritesheet(
                         player_path / "idle_turn" / "idle_turn.png",
                         (128, 128),
@@ -56,6 +58,7 @@ class AssetManager:
                     loop=False,
                 ),
                 "player/run": Animation(
+                    "player/run",
                     load_images(
                         player_path / "run",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -64,6 +67,7 @@ class AssetManager:
                     0.2,
                 ),
                 "player/jump": Animation(
+                    "player/jump",
                     load_images(
                         player_path / "jump",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -72,24 +76,30 @@ class AssetManager:
                     0.2,
                     False,
                 ),
-                "player/fall": PostAnimatableAnimation(
-                    load_spritesheet(
-                        player_path / "fall" / "fall_loop.png",
-                        (128, 128),
-                        scale_ratio_or_size=PLAYER_SCALE,
-                        trim_transparent_pixel=(True, (44, 36, 41, 55)),
-                    ),
+                "player/fall": Animation(
+                    "player/fall",
                     load_spritesheet(
                         player_path / "fall" / "fall.png",
                         (128, 128),
                         scale_ratio_or_size=PLAYER_SCALE,
                         trim_transparent_pixel=(True, (44, 36, 41, 55)),
                     ),
-                    0.2,
                     0.1,
+                    False,
+                ),
+                "player/fall_loop": Animation(
+                    "player/fall_loop",
+                    load_spritesheet(
+                        player_path / "fall" / "fall_loop.png",
+                        (128, 128),
+                        scale_ratio_or_size=PLAYER_SCALE,
+                        trim_transparent_pixel=(True, (44, 36, 41, 55)),
+                    ),
+                    0.2,
                     True,
                 ),
                 "player/attack": Animation(
+                    "player/attack",
                     load_images(
                         player_path / "attack",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -99,6 +109,7 @@ class AssetManager:
                     False,
                 ),
                 "player/hit": Animation(
+                    "player/hit",
                     load_spritesheet(
                         player_path / "hurt" / "hurt.png",
                         (128, 128),
@@ -110,6 +121,7 @@ class AssetManager:
                     loop=False,
                 ),
                 "player/wallslide": Animation(
+                    "player/wallslide",
                     load_spritesheet(
                         player_path / "wallslide" / "wallslide.png",
                         (128, 128),
@@ -120,6 +132,7 @@ class AssetManager:
                     False,
                 ),
                 "player/skillcast": Animation(
+                    "player/skillcast",
                     load_images(
                         player_path / "idle",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -135,6 +148,7 @@ class AssetManager:
         self.assets.update(
             {
                 "bat/fly": Animation(
+                    "bat/fly",
                     load_images(
                         ASSETS_PATH / "enemies" / "bat" / "fly",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -144,6 +158,7 @@ class AssetManager:
                     True,
                 ),
                 "bat/chase": Animation(
+                    "bat/chase",
                     load_images(
                         ASSETS_PATH / "enemies" / "bat" / "fly",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -153,6 +168,7 @@ class AssetManager:
                     True,
                 ),
                 "bat/attack": Animation(
+                    "bat/attack",
                     load_images(
                         ASSETS_PATH / "enemies" / "bat" / "attack",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -162,6 +178,7 @@ class AssetManager:
                     False,
                 ),
                 "bat/hit": Animation(
+                    "bat/hit",
                     load_images(
                         ASSETS_PATH / "enemies" / "bat" / "hit",
                         scale_ratio_or_size=PLAYER_SCALE,
@@ -171,6 +188,7 @@ class AssetManager:
                     True,
                 ),
                 "mushroom/idle": Animation(
+                    "mushroom/idle",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "mushroom" / "idle.png",
                         (150, 150),
@@ -179,6 +197,7 @@ class AssetManager:
                     )
                 ),
                 "mushroom/run": Animation(
+                    "mushroom/run",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "mushroom" / "run.png",
                         (150, 150),
@@ -187,6 +206,7 @@ class AssetManager:
                     )
                 ),
                 "mushroom/hit": Animation(
+                    "mushroom/hit",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "mushroom" / "hit.png",
                         (150, 150),
@@ -197,6 +217,7 @@ class AssetManager:
                     False,
                 ),
                 "mushroom/death": Animation(
+                    "mushroom/death",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "mushroom" / "death.png",
                         (150, 150),
@@ -207,6 +228,7 @@ class AssetManager:
                     False,
                 ),
                 "mushroom/attack": Animation(
+                    "mushroom/attack",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "mushroom" / "attack.png",
                         (150, 150),
@@ -217,6 +239,7 @@ class AssetManager:
                     loop=False,
                 ),
                 "fireworm/idle": Animation(
+                    "fireworm/idle",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "fireworm" / "idle.png",
                         (90, 90),
@@ -227,6 +250,7 @@ class AssetManager:
                     True,
                 ),
                 "fireworm/death": Animation(
+                    "fireworm/death",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "fireworm" / "death.png",
                         (90, 90),
@@ -237,6 +261,7 @@ class AssetManager:
                     False,
                 ),
                 "fireworm/hit": Animation(
+                    "fireworm/hit",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "fireworm" / "hit.png",
                         (90, 90),
@@ -247,6 +272,7 @@ class AssetManager:
                     False,
                 ),
                 "fireworm/run": Animation(
+                    "fireworm/run",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "fireworm" / "run.png",
                         (90, 90),
@@ -257,6 +283,7 @@ class AssetManager:
                     True,
                 ),
                 "fireworm/attack": Animation(
+                    "fireworm/attack",
                     load_spritesheet(
                         ASSETS_PATH / "enemies" / "fireworm" / "attack.png",
                         (90, 90),
@@ -275,11 +302,13 @@ class AssetManager:
         self.assets.update(
             {
                 "projectile/fire": Animation(
+                    "projectile/fire",
                     load_spritesheet(ASSETS_PATH / "projectiles" / "fireball" / "move.png", (46, 46), **options),
                     animation_speed=0.2,
                     loop=True,
                 ),
                 "projectile/fire_explosion": Animation(
+                    "projectile/fire_explosion",
                     load_spritesheet(
                         ASSETS_PATH / "projectiles" / "fireball" / "explosion.png",
                         (46, 46),

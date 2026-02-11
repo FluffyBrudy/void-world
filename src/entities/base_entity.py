@@ -13,8 +13,8 @@ import pygame
 from pygame.surface import Surface
 
 from entities.states.base_fsm import State
-from ttypes.index_type import TPosType
 from managers.asset_manager import assets_manager
+from ttypes.index_type import TPosType
 from utils.animation import Animation
 
 if TYPE_CHECKING:
@@ -62,7 +62,7 @@ class BaseEntity(ABC):
 
         default_state = "idle" if "idle" in self.states else list(self.states.keys())[0]
         self.current_state = self.states[default_state]
-        self.animation = assets_manager.assets[etype + "/" + self.current_state.name]
+        self.set_animation(etype + "/" + default_state)
 
         self.stats = {"health": 1.0, "mana": float("-inf")}
 
@@ -79,6 +79,10 @@ class BaseEntity(ABC):
         new_x = x + ox
         return pygame.Rect(new_x, new_y, new_w, new_h)
 
+    def set_animation(self, name: str):
+        animation = assets_manager.assets[name].copy()
+        self.animation = animation
+
     @abstractmethod
     def grounded(self) -> bool: ...
 
@@ -87,7 +91,7 @@ class BaseEntity(ABC):
     def set_state(self, new_state: str):
         if self.current_state and new_state != self.current_state.name:
             self.current_state = self.states[new_state]
-            self.animation = assets_manager.assets[self.etype + "/" + new_state].copy()
+            self.set_animation(self.etype + "/" + new_state)
 
     def get_state(self) -> str:
         return self.current_state.name if self.current_state else ""

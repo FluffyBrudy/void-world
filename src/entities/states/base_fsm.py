@@ -7,7 +7,7 @@ TEntity = TypeVar("TEntity", bound="BaseEntity")
 
 
 class State(Generic[TEntity]):
-    def __init__(self, name: str, startup_frame=0, active_frame=0):
+    def __init__(self, name: str, startup_frame: int, active_frame: int):
         self.name = name
         self.startup_frame = startup_frame
         self.active_frame = active_frame

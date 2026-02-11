@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 
 class FlyState(State["Bat"]):
-    def __init__(self):
-        super().__init__("fly")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("fly", startup_frame, active_frame)
 
     def enter(self, entity: "Bat") -> None:
         pass
@@ -40,8 +40,8 @@ class FlyState(State["Bat"]):
 
 
 class ChaseState(State["Bat"]):
-    def __init__(self):
-        super().__init__("chase")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("chase", startup_frame, active_frame)
 
     def update(self, entity: "Bat", **kwargs):
         if entity.target is None:
@@ -78,8 +78,8 @@ class ChaseState(State["Bat"]):
 
 
 class AttackState(State["Bat"]):
-    def __init__(self):
-        super().__init__("attack")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("attack", startup_frame, active_frame)
 
     def enter(self, entity: "Bat") -> None:
         entity.attack_timer.reset_to_now()
@@ -115,8 +115,8 @@ class AttackState(State["Bat"]):
 
 
 class HitState(State["Bat"]):
-    def __init__(self):
-        super().__init__("hit")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("hit", startup_frame, active_frame)
 
     def enter(self, entity: "Bat") -> None:
         entity.velocity *= 0

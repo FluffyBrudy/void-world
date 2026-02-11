@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 
 class IdleState(State["Enemy"]):
-    def __init__(self):
-        super().__init__("idle")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("idle", startup_frame, active_frame)
 
     def enter(self, entity: "Enemy"):
         entity.velocity *= 0
@@ -25,8 +25,8 @@ class IdleState(State["Enemy"]):
 
 
 class RunState(State["Enemy"]):
-    def __init__(self):
-        super().__init__("run")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("run", startup_frame, active_frame)
 
     def update(self, entity: "Enemy", **kwargs):
         if entity.target is None:
@@ -78,8 +78,8 @@ class AttackState(State["Enemy"]):
 
 
 class HitState(State["Enemy"]):
-    def __init__(self):
-        super().__init__("hit")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("hit", startup_frame, active_frame)
 
     def enter(self, entity: "Enemy"):
         entity.velocity.x *= 0
@@ -98,8 +98,8 @@ class HitState(State["Enemy"]):
 
 
 class DeathState(State["Enemy"]):
-    def __init__(self):
-        super().__init__("death")
+    def __init__(self, startup_frame=0, active_frame=0):
+        super().__init__("death", startup_frame, active_frame)
 
     def enter(self, entity: "Enemy"):
         entity.velocity *= 0
